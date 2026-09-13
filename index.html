@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>NEXORA AI</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<!-- ===============================
+     AUTH SCREEN
+================================ -->
+
+<div
+    id="authScreen"
+    class="auth-screen"
+>
+
+    <div class="auth-card">
+
+        <div class="auth-logo">
+            N
+        </div>
+
+        <h1>
+            NEXORA AI
+        </h1>
+
+        <p class="auth-subtitle">
+            Your intelligent AI assistant
+        </p>
+
+
+        <div class="auth-tabs">
+
+            <button
+                id="loginTab"
+                class="auth-tab active"
+                type="button"
+            >
+                Login
+            </button>
+
+            <button
+                id="signupTab"
+                class="auth-tab"
+                type="button"
+            >
+                Sign Up
+            </button>
+
+        </div>
+
+
+        <!-- LOGIN -->
+
+        <div
+            id="loginForm"
+            class="auth-form"
+        >
+
+            <input
+                type="text"
+                id="loginUsername"
+                placeholder="Username"
+                autocomplete="username"
+            >
+
+            <input
+                type="password"
+                id="loginPassword"
+                placeholder="Password"
+                autocomplete="current-password"
+            >
+
+            <button
+                id="loginButton"
+                class="auth-button"
+                type="button"
+            >
+                Login
+            </button>
+
+        </div>
+
+
+        <!-- SIGN UP -->
+
+        <div
+            id="signupForm"
+            class="auth-form hidden"
+        >
+
+            <input
+                type="text"
+                id="signupUsername"
+                placeholder="Choose a username"
+                autocomplete="username"
+            >
+
+            <input
+                type="password"
+                id="signupPassword"
+                placeholder="Create a password"
+                autocomplete="new-password"
+            >
+
+            <input
+                type="password"
+                id="signupConfirmPassword"
+                placeholder="Confirm password"
+                autocomplete="new-password"
+            >
+
+            <button
+                id="signupButton"
+                class="auth-button"
+                type="button"
+            >
+                Create Account
+            </button>
+
+        </div>
+
+
+        <p
+            id="authMessage"
+            class="auth-message"
+        ></p>
+
+
+        <div class="creator-credit">
+            CREATED BY OKORIE DAVID IKENNA
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- ===============================
+     MAIN APP
+================================ -->
+
+<div
+    id="app"
+    class="app hidden"
+>
+
+
+    <!-- HEADER -->
+
+    <header class="header">
+
+
+        <div class="logo">
+
+            <div class="logo-icon">
+                N
+            </div>
+
+            <div>
+
+                <h1>
+                    NEXORA
+                </h1>
+
+                <p>
+                    AI ASSISTANT
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="header-actions">
+
+
+            <div class="status">
+
+                <span class="status-dot"></span>
+
+                Online
+
+            </div>
+
+
+            <!-- PROFILE BUTTON -->
+
+            <button
+                id="profileButton"
+                class="profile-button"
+                type="button"
+            >
+                👤
+            </button>
+
+
+            <button
+                id="clearButton"
+                class="clear-button"
+                type="button"
+            >
+                Clear
+            </button>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- ===============================
+         PROFILE PANEL
+    ================================= -->
+
+    <div
+        id="profilePanel"
+        class="profile-panel hidden"
+    >
+
+        <div class="profile-header">
+
+            <h2>
+                Your Profile
+            </h2>
+
+            <button
+                id="closeProfileButton"
+                class="close-profile"
+                type="button"
+            >
+                ✕
+            </button>
+
+        </div>
+
+
+        <div class="profile-avatar">
+            👤
+        </div>
+
+
+        <p class="profile-label">
+            Username
+        </p>
+
+
+        <h3
+            id="profileUsername"
+            class="profile-username"
+        >
+            User
+        </h3>
+
+
+        <div class="profile-stat">
+
+            <span>
+                Conversations
+            </span>
+
+            <strong
+                id="conversationCount"
+            >
+                0
+            </strong>
+
+        </div>
+
+
+        <button
+            id="logoutButton"
+            class="logout-button"
+            type="button"
+        >
+            🚪 Logout
+        </button>
+
+    </div>
+
+
+
+    <!-- ===============================
+         CHAT
+    ================================= -->
+
+    <main class="chat-container">
+
+
+        <div
+            id="chatBox"
+            class="chat-box"
+        >
+
+            <div class="welcome">
+
+                <div class="welcome-icon">
+                    ✦
+                </div>
+
+                <h2>
+                    Hello, I'm NEXORA.
+                </h2>
+
+                <p>
+                    Your intelligent AI assistant.
+                    Ask me anything and let's get started.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- INPUT -->
+
+        <div class="input-area">
+
+            <div class="input-wrapper">
+
+                <input
+                    type="text"
+                    id="messageInput"
+                    placeholder="Message NEXORA..."
+                    autocomplete="off"
+                >
+
+                <button
+                    id="sendButton"
+                    type="button"
+                >
+                    ➤
+                </button>
+
+            </div>
+
+
+            <p class="disclaimer">
+                NEXORA can make mistakes.
+                Check important information.
+            </p>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+
+<script src="script.js"></script>
+
+</body>
+
+</html>
