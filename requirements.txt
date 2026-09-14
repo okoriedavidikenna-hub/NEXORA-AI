@@ -2,3 +2,4 @@ Flask==3.0.3
 Flask-Cors
 Gunicorn
 Werkzeug
+psycopg2-binary
