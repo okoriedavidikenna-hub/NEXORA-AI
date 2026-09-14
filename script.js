@@ -1,4 +1,11 @@
 /* ===============================
+   NEXORA LIVE BACKEND
+================================ */
+
+const API_URL = "https://nexora-ai-9jgj.onrender.com";
+
+
+/* ===============================
    NEXORA USER SYSTEM
 ================================ */
 
@@ -24,6 +31,7 @@ const signupButton = document.getElementById("signupButton");
 
 const authMessage = document.getElementById("authMessage");
 
+
 /* ===============================
    CHAT ELEMENTS
 ================================ */
@@ -33,25 +41,33 @@ const messageInput = document.getElementById("messageInput");
 const sendButton = document.getElementById("sendButton");
 const clearButton = document.getElementById("clearButton");
 
+
 /* ===============================
    PROFILE ELEMENTS
 ================================ */
 
 const profileButton = document.getElementById("profileButton");
 const profilePanel = document.getElementById("profilePanel");
+
 const closeProfileButton =
     document.getElementById("closeProfileButton");
+
 const profileUsername =
     document.getElementById("profileUsername");
+
 const conversationCount =
     document.getElementById("conversationCount");
-const logoutButton = document.getElementById("logoutButton");
+
+const logoutButton =
+    document.getElementById("logoutButton");
+
 
 /* ===============================
    AUTH TABS
 ================================ */
 
 loginTab.addEventListener("click", function() {
+
     loginTab.classList.add("active");
     signupTab.classList.remove("active");
 
@@ -61,7 +77,9 @@ loginTab.addEventListener("click", function() {
     authMessage.textContent = "";
 });
 
+
 signupTab.addEventListener("click", function() {
+
     signupTab.classList.add("active");
     loginTab.classList.remove("active");
 
@@ -71,6 +89,7 @@ signupTab.addEventListener("click", function() {
     authMessage.textContent = "";
 });
 
+
 /* ===============================
    SIGN UP
 ================================ */
@@ -79,45 +98,58 @@ signupButton.addEventListener("click", async function() {
 
     const username = signupUsername.value.trim();
     const password = signupPassword.value;
-    const confirmPassword = signupConfirmPassword.value;
+    const confirmPassword =
+        signupConfirmPassword.value;
 
     if (!username || !password || !confirmPassword) {
+
         authMessage.textContent =
             "Please fill in all fields.";
+
         return;
     }
 
     if (password !== confirmPassword) {
+
         authMessage.textContent =
             "Passwords do not match.";
+
         return;
     }
 
     if (username.length < 3) {
+
         authMessage.textContent =
             "Username must be at least 3 characters.";
+
         return;
     }
 
     if (password.length < 6) {
+
         authMessage.textContent =
             "Password must be at least 6 characters.";
+
         return;
     }
 
     signupButton.disabled = true;
+
     authMessage.textContent =
         "Creating account...";
 
     try {
 
         const response = await fetch(
-            "http://127.0.0.1:5000/signup",
+            API_URL + "/signup",
             {
                 method: "POST",
+
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type":
+                        "application/json"
                 },
+
                 body: JSON.stringify({
                     username: username,
                     password: password
@@ -125,12 +157,15 @@ signupButton.addEventListener("click", async function() {
             }
         );
 
-        const data = await response.json();
+        const data =
+            await response.json();
 
         if (!response.ok) {
+
             authMessage.textContent =
                 data.message ||
                 "Could not create account.";
+
             return;
         }
 
@@ -142,14 +177,19 @@ signupButton.addEventListener("click", async function() {
         signupConfirmPassword.value = "";
 
         loginTab.click();
-        loginUsername.value = username;
+
+        loginUsername.value =
+            username;
 
     } catch (error) {
 
         authMessage.textContent =
             "⚠️ Cannot connect to NEXORA server.";
 
-        console.error("Signup error:", error);
+        console.error(
+            "Signup error:",
+            error
+        );
 
     } finally {
 
@@ -157,33 +197,44 @@ signupButton.addEventListener("click", async function() {
     }
 });
 
+
 /* ===============================
    LOGIN
 ================================ */
 
 loginButton.addEventListener("click", async function() {
 
-    const username = loginUsername.value.trim();
-    const password = loginPassword.value;
+    const username =
+        loginUsername.value.trim();
+
+    const password =
+        loginPassword.value;
 
     if (!username || !password) {
+
         authMessage.textContent =
             "Enter your username and password.";
+
         return;
     }
 
     loginButton.disabled = true;
-    authMessage.textContent = "Logging in...";
+
+    authMessage.textContent =
+        "Logging in...";
 
     try {
 
         const response = await fetch(
-            "http://127.0.0.1:5000/login",
+            API_URL + "/login",
             {
                 method: "POST",
+
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type":
+                        "application/json"
                 },
+
                 body: JSON.stringify({
                     username: username,
                     password: password
@@ -191,12 +242,15 @@ loginButton.addEventListener("click", async function() {
             }
         );
 
-        const data = await response.json();
+        const data =
+            await response.json();
 
         if (!response.ok) {
+
             authMessage.textContent =
                 data.message ||
                 "Login failed.";
+
             return;
         }
 
@@ -209,6 +263,7 @@ loginButton.addEventListener("click", async function() {
         app.classList.remove("hidden");
 
         loginPassword.value = "";
+
         authMessage.textContent = "";
 
         messageInput.focus();
@@ -218,7 +273,10 @@ loginButton.addEventListener("click", async function() {
         authMessage.textContent =
             "⚠️ Cannot connect to NEXORA server.";
 
-        console.error("Login error:", error);
+        console.error(
+            "Login error:",
+            error
+        );
 
     } finally {
 
@@ -226,13 +284,18 @@ loginButton.addEventListener("click", async function() {
     }
 });
 
+
 /* ===============================
    GET CURRENT USER
 ================================ */
 
 function getCurrentUser() {
-    return localStorage.getItem("nexora_user");
+
+    return localStorage.getItem(
+        "nexora_user"
+    );
 }
+
 
 /* ===============================
    CHECK LOGIN
@@ -240,7 +303,8 @@ function getCurrentUser() {
 
 function checkLogin() {
 
-    const savedUser = getCurrentUser();
+    const savedUser =
+        getCurrentUser();
 
     if (savedUser) {
 
@@ -254,30 +318,39 @@ function checkLogin() {
     }
 }
 
+
 /* ===============================
    PROFILE
 ================================ */
 
 async function openProfile() {
 
-    const username = getCurrentUser();
+    const username =
+        getCurrentUser();
 
     if (!username) return;
 
-    profileUsername.textContent = username;
+    profileUsername.textContent =
+        username;
 
-    profilePanel.classList.remove("hidden");
+    profilePanel.classList.remove(
+        "hidden"
+    );
 
-    conversationCount.textContent = "Loading...";
+    conversationCount.textContent =
+        "Loading...";
 
     try {
 
-        const response = await fetch(
-            "http://127.0.0.1:5000/profile?username=" +
-            encodeURIComponent(username)
-        );
+        const response =
+            await fetch(
+                API_URL +
+                "/profile?username=" +
+                encodeURIComponent(username)
+            );
 
-        const data = await response.json();
+        const data =
+            await response.json();
 
         if (response.ok) {
 
@@ -286,7 +359,8 @@ async function openProfile() {
 
         } else {
 
-            conversationCount.textContent = "0";
+            conversationCount.textContent =
+                "0";
         }
 
     } catch (error) {
@@ -296,9 +370,11 @@ async function openProfile() {
             error
         );
 
-        conversationCount.textContent = "0";
+        conversationCount.textContent =
+            "0";
     }
 }
+
 
 /* ===============================
    OPEN PROFILE BUTTON
@@ -317,6 +393,7 @@ if (profileButton) {
     );
 }
 
+
 /* ===============================
    CLOSE PROFILE
 ================================ */
@@ -327,10 +404,13 @@ if (closeProfileButton) {
         "click",
         function() {
 
-            profilePanel.classList.add("hidden");
+            profilePanel.classList.add(
+                "hidden"
+            );
         }
     );
 }
+
 
 /* ===============================
    LOGOUT
@@ -350,7 +430,9 @@ if (logoutButton) {
                 "hidden"
             );
 
-            app.classList.add("hidden");
+            app.classList.add(
+                "hidden"
+            );
 
             authScreen.classList.remove(
                 "hidden"
@@ -368,7 +450,6 @@ if (logoutButton) {
             `;
 
             loginPassword.value = "";
-
             messageInput.value = "";
 
             loginTab.click();
@@ -376,11 +457,15 @@ if (logoutButton) {
     );
 }
 
+
 /* ===============================
-   CHAT FUNCTIONS
+   ADD MESSAGE
 ================================ */
 
-function addMessage(text, sender) {
+function addMessage(
+    text,
+    sender
+) {
 
     const message =
         document.createElement("div");
@@ -388,9 +473,12 @@ function addMessage(text, sender) {
     message.className =
         `message ${sender}`;
 
-    message.textContent = text;
+    message.textContent =
+        text;
 
-    chatBox.appendChild(message);
+    chatBox.appendChild(
+        message
+    );
 
     chatBox.scrollTop =
         chatBox.scrollHeight;
@@ -398,22 +486,40 @@ function addMessage(text, sender) {
     return message;
 }
 
-async function typeMessage(element, text) {
+
+/* ===============================
+   TYPE MESSAGE
+================================ */
+
+async function typeMessage(
+    element,
+    text
+) {
 
     element.textContent = "";
 
-    for (let i = 0; i < text.length; i++) {
+    for (
+        let i = 0;
+        i < text.length;
+        i++
+    ) {
 
-        element.textContent += text[i];
+        element.textContent +=
+            text[i];
 
         chatBox.scrollTop =
             chatBox.scrollHeight;
 
-        await new Promise(resolve =>
-            setTimeout(resolve, 20)
+        await new Promise(
+            resolve =>
+                setTimeout(
+                    resolve,
+                    20
+                )
         );
     }
 }
+
 
 /* ===============================
    SEND MESSAGE
@@ -435,7 +541,9 @@ async function sendMessage() {
             "hidden"
         );
 
-        app.classList.add("hidden");
+        app.classList.add(
+            "hidden"
+        );
 
         return;
     }
@@ -458,19 +566,23 @@ async function sendMessage() {
 
     try {
 
-        const API_URL = "https://nexora-ai-9jgj.onrender.com";
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-                body: JSON.stringify({
-                    message: message,
-                    username: username
-                })
-            }
-        );
+        const response =
+            await fetch(
+                API_URL + "/chat",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        message: message,
+                        username: username
+                    })
+                }
+            );
 
         const data =
             await response.json();
@@ -510,6 +622,7 @@ async function sendMessage() {
     }
 }
 
+
 /* ===============================
    SEND BUTTON
 ================================ */
@@ -518,6 +631,7 @@ sendButton.addEventListener(
     "click",
     sendMessage
 );
+
 
 /* ===============================
    ENTER KEY
@@ -528,10 +642,14 @@ messageInput.addEventListener(
     function(event) {
 
         if (event.key === "Enter") {
+
+            event.preventDefault();
+
             sendMessage();
         }
     }
 );
+
 
 /* ===============================
    CLEAR CHAT
@@ -544,28 +662,33 @@ clearButton.addEventListener(
         const username =
             getCurrentUser();
 
-        try {
+        if (username) {
 
-            await fetch(
-                "http://127.0.0.1:5000/clear",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-                    body: JSON.stringify({
-                        username: username
-                    })
-                }
-            );
+            try {
 
-        } catch (error) {
+                await fetch(
+                    API_URL + "/clear",
+                    {
+                        method: "POST",
 
-            console.error(
-                "Could not clear server memory:",
-                error
-            );
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            username: username
+                        })
+                    }
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Could not clear server memory:",
+                    error
+                );
+            }
         }
 
         chatBox.innerHTML = `
@@ -582,6 +705,7 @@ clearButton.addEventListener(
         messageInput.focus();
     }
 );
+
 
 /* ===============================
    START NEXORA
