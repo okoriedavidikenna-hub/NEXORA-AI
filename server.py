@@ -4,6 +4,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import json
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor, Json
 
 
 # ============================================================
@@ -54,28 +56,122 @@ def create_default_memory():
 
 
 # ============================================================
-# USER ACCOUNT SYSTEM
+# DATABASE / STORAGE
+# ============================================================
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+
+def get_db_connection():
+
+    if not DATABASE_URL:
+        return None
+
+    return psycopg2.connect(DATABASE_URL)
+
+
+def init_database():
+
+    if not DATABASE_URL:
+
+        print(
+            "DATABASE_URL not found. "
+            "Using local JSON storage."
+        )
+
+        return
+
+    connection = get_db_connection()
+
+    try:
+
+        cursor = connection.cursor()
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                username TEXT PRIMARY KEY,
+                password_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_memory (
+                username TEXT PRIMARY KEY,
+                memory JSONB NOT NULL
+            )
+        """)
+
+        connection.commit()
+
+        cursor.close()
+
+        print(
+            "PostgreSQL database initialized successfully."
+        )
+
+    finally:
+
+        connection.close()
+
+
+# ============================================================
+# USER ACCOUNT STORAGE
 # ============================================================
 
 def load_users():
 
-    if not os.path.exists(USERS_FILE):
-        return []
+    if not DATABASE_URL:
+
+        if not os.path.exists(USERS_FILE):
+            return []
+
+        try:
+
+            with open(
+                USERS_FILE,
+                "r",
+                encoding="utf-8"
+            ) as file:
+
+                data = json.load(file)
+
+            if isinstance(data, list):
+                return data
+
+            return []
+
+        except Exception as error:
+
+            print("Users load error:", error)
+
+            return []
+
+    connection = get_db_connection()
 
     try:
 
-        with open(
-            USERS_FILE,
-            "r",
-            encoding="utf-8"
-        ) as file:
+        cursor = connection.cursor(
+            cursor_factory=RealDictCursor
+        )
 
-            data = json.load(file)
+        cursor.execute("""
+            SELECT
+                username,
+                password_hash,
+                created_at
+            FROM users
+            ORDER BY username
+        """)
 
-        if isinstance(data, list):
-            return data
+        users = cursor.fetchall()
 
-        return []
+        cursor.close()
+
+        return [
+            dict(user)
+            for user in users
+        ]
 
     except Exception as error:
 
@@ -83,89 +179,244 @@ def load_users():
 
         return []
 
+    finally:
+
+        connection.close()
+
 
 def save_users(users):
 
+    if not DATABASE_URL:
+
+        try:
+
+            with open(
+                USERS_FILE,
+                "w",
+                encoding="utf-8"
+            ) as file:
+
+                json.dump(
+                    users,
+                    file,
+                    indent=4,
+                    ensure_ascii=False
+                )
+
+            return True
+
+        except Exception as error:
+
+            print("Users save error:", error)
+
+            return False
+
+    connection = get_db_connection()
+
     try:
 
-        with open(
-            USERS_FILE,
-            "w",
-            encoding="utf-8"
-        ) as file:
+        cursor = connection.cursor()
 
-            json.dump(
-                users,
-                file,
-                indent=4,
-                ensure_ascii=False
+        for user in users:
+
+            cursor.execute(
+                """
+                INSERT INTO users
+                (
+                    username,
+                    password_hash,
+                    created_at
+                )
+                VALUES (%s, %s, %s)
+
+                ON CONFLICT (username)
+                DO UPDATE SET
+                    password_hash =
+                        EXCLUDED.password_hash,
+                    created_at =
+                        EXCLUDED.created_at
+                """,
+                (
+                    user.get("username"),
+                    user.get("password_hash"),
+                    user.get(
+                        "created_at",
+                        ""
+                    )
+                )
             )
+
+        connection.commit()
+
+        cursor.close()
 
         return True
 
     except Exception as error:
+
+        connection.rollback()
 
         print("Users save error:", error)
 
         return False
 
+    finally:
+
+        connection.close()
+
 
 # ============================================================
-# USER MEMORY SYSTEM
+# USER MEMORY STORAGE
 # ============================================================
 
 def load_all_user_memory():
 
-    if not os.path.exists(USER_MEMORY_FILE):
+    if not DATABASE_URL:
 
-        return {}
+        if not os.path.exists(
+            USER_MEMORY_FILE
+        ):
+            return {}
+
+        try:
+
+            with open(
+                USER_MEMORY_FILE,
+                "r",
+                encoding="utf-8"
+            ) as file:
+
+                data = json.load(file)
+
+            if isinstance(data, dict):
+                return data
+
+            return {}
+
+        except Exception as error:
+
+            print(
+                "User memory load error:",
+                error
+            )
+
+            return {}
+
+    connection = get_db_connection()
 
     try:
 
-        with open(
-            USER_MEMORY_FILE,
-            "r",
-            encoding="utf-8"
-        ) as file:
+        cursor = connection.cursor()
 
-            data = json.load(file)
+        cursor.execute("""
+            SELECT username, memory
+            FROM user_memory
+        """)
 
-        if isinstance(data, dict):
-            return data
+        rows = cursor.fetchall()
 
-        return {}
+        cursor.close()
+
+        result = {}
+
+        for username, memory in rows:
+
+            result[username] = memory
+
+        return result
 
     except Exception as error:
 
-        print("User memory load error:", error)
+        print(
+            "User memory load error:",
+            error
+        )
 
         return {}
+
+    finally:
+
+        connection.close()
 
 
 def save_all_user_memory(all_memory):
 
+    if not DATABASE_URL:
+
+        try:
+
+            with open(
+                USER_MEMORY_FILE,
+                "w",
+                encoding="utf-8"
+            ) as file:
+
+                json.dump(
+                    all_memory,
+                    file,
+                    indent=4,
+                    ensure_ascii=False
+                )
+
+            return True
+
+        except Exception as error:
+
+            print(
+                "User memory save error:",
+                error
+            )
+
+            return False
+
+    connection = get_db_connection()
+
     try:
 
-        with open(
-            USER_MEMORY_FILE,
-            "w",
-            encoding="utf-8"
-        ) as file:
+        cursor = connection.cursor()
 
-            json.dump(
-                all_memory,
-                file,
-                indent=4,
-                ensure_ascii=False
+        for username, memory in all_memory.items():
+
+            cursor.execute(
+                """
+                INSERT INTO user_memory
+                (
+                    username,
+                    memory
+                )
+                VALUES (%s, %s)
+
+                ON CONFLICT (username)
+                DO UPDATE SET
+                    memory =
+                        EXCLUDED.memory
+                """,
+                (
+                    username,
+                    Json(memory)
+                )
             )
+
+        connection.commit()
+
+        cursor.close()
 
         return True
 
     except Exception as error:
 
-        print("User memory save error:", error)
+        connection.rollback()
+
+        print(
+            "User memory save error:",
+            error
+        )
 
         return False
+
+    finally:
+
+        connection.close()
 
 
 def get_user_memory(username):
@@ -178,7 +429,9 @@ def get_user_memory(username):
 
         all_memory[key] = create_default_memory()
 
-        save_all_user_memory(all_memory)
+        save_all_user_memory(
+            all_memory
+        )
 
     memory = all_memory[key]
 
@@ -193,7 +446,10 @@ def get_user_memory(username):
     return memory
 
 
-def save_user_memory(username, memory):
+def save_user_memory(
+    username,
+    memory
+):
 
     all_memory = load_all_user_memory()
 
@@ -201,7 +457,25 @@ def save_user_memory(username, memory):
 
     all_memory[key] = memory
 
-    save_all_user_memory(all_memory)
+    save_all_user_memory(
+        all_memory
+    )
+
+
+# ============================================================
+# INITIALIZE DATABASE
+# ============================================================
+
+try:
+
+    init_database()
+
+except Exception as error:
+
+    print(
+        "Database initialization error:",
+        error
+    )
 
 
 # ============================================================
@@ -228,7 +502,10 @@ def find_user(username):
 # SIGN UP
 # ============================================================
 
-@app.route("/signup", methods=["POST"])
+@app.route(
+    "/signup",
+    methods=["POST"]
+)
 def signup():
 
     data = request.get_json(
@@ -236,11 +513,17 @@ def signup():
     ) or {}
 
     username = str(
-        data.get("username", "")
+        data.get(
+            "username",
+            ""
+        )
     ).strip()
 
     password = str(
-        data.get("password", "")
+        data.get(
+            "password",
+            ""
+        )
     )
 
     if not username or not password:
@@ -276,7 +559,9 @@ def signup():
     new_user = {
         "username": username,
         "password_hash":
-            generate_password_hash(password),
+            generate_password_hash(
+                password
+            ),
         "created_at":
             datetime.now().isoformat()
     }
@@ -290,7 +575,6 @@ def signup():
             "Could not save account."
         }), 500
 
-    # Create separate memory for the new user
     get_user_memory(username)
 
     print(
@@ -309,7 +593,10 @@ def signup():
 # LOGIN
 # ============================================================
 
-@app.route("/login", methods=["POST"])
+@app.route(
+    "/login",
+    methods=["POST"]
+)
 def login():
 
     data = request.get_json(
@@ -317,11 +604,17 @@ def login():
     ) or {}
 
     username = str(
-        data.get("username", "")
+        data.get(
+            "username",
+            ""
+        )
     ).strip()
 
     password = str(
-        data.get("password", "")
+        data.get(
+            "password",
+            ""
+        )
     )
 
     if not username or not password:
@@ -355,7 +648,6 @@ def login():
             "Invalid username or password."
         }), 401
 
-    # Make sure this user has memory
     get_user_memory(
         user["username"]
     )
@@ -397,7 +689,9 @@ def add_to_history(
 
     memory[
         "conversation_history"
-    ].append(history_item)
+    ].append(
+        history_item
+    )
 
     if len(
         memory["conversation_history"]
@@ -597,7 +891,9 @@ def has_context_reference(text):
     ]
 
     return any(
-        text.startswith(word + " ")
+        text.startswith(
+            word + " "
+        )
         or text == word
         for word in references
     )
@@ -800,6 +1096,7 @@ def contextual_response(
         return knowledge_answer
 
     topic = detect_topic(text)
+
     subject = detect_subject(text)
 
     if subject:
@@ -893,7 +1190,10 @@ def save_context(
 # CHAT
 # ============================================================
 
-@app.route("/chat", methods=["POST"])
+@app.route(
+    "/chat",
+    methods=["POST"]
+)
 def chat():
 
     data = request.get_json(
@@ -901,11 +1201,17 @@ def chat():
     ) or {}
 
     username = str(
-        data.get("username", "")
+        data.get(
+            "username",
+            ""
+        )
     ).strip()
 
     question = str(
-        data.get("message", "")
+        data.get(
+            "message",
+            ""
+        )
     ).strip()
 
     if not username:
@@ -922,7 +1228,6 @@ def chat():
             "Please enter a message."
         }), 400
 
-    # Make sure the account actually exists
     user = find_user(username)
 
     if user is None:
@@ -932,7 +1237,6 @@ def chat():
             "User account not found. Please log in again."
         }), 401
 
-    # Get ONLY this user's memory
     user_memory = get_user_memory(
         user["username"]
     )
@@ -961,7 +1265,8 @@ def chat():
 
     return jsonify({
         "reply": answer,
-        "username": user["username"]
+        "username":
+            user["username"]
     })
 
 
@@ -969,7 +1274,10 @@ def chat():
 # CLEAR USER MEMORY
 # ============================================================
 
-@app.route("/clear", methods=["POST"])
+@app.route(
+    "/clear",
+    methods=["POST"]
+)
 def clear():
 
     data = request.get_json(
@@ -977,7 +1285,10 @@ def clear():
     ) or {}
 
     username = str(
-        data.get("username", "")
+        data.get(
+            "username",
+            ""
+        )
     ).strip()
 
     if not username:
@@ -1013,7 +1324,10 @@ def clear():
 # USER HISTORY
 # ============================================================
 
-@app.route("/history", methods=["GET"])
+@app.route(
+    "/history",
+    methods=["GET"]
+)
 def history():
 
     username = request.args.get(
@@ -1059,7 +1373,10 @@ def history():
 # USER PROFILE
 # ============================================================
 
-@app.route("/profile", methods=["GET"])
+@app.route(
+    "/profile",
+    methods=["GET"]
+)
 def profile():
 
     username = request.args.get(
@@ -1093,7 +1410,10 @@ def profile():
             user["username"],
 
         "created_at":
-            user.get("created_at", ""),
+            user.get(
+                "created_at",
+                ""
+            ),
 
         "conversation_count":
             user_memory.get(
@@ -1113,7 +1433,10 @@ def profile():
 # STATUS
 # ============================================================
 
-@app.route("/status", methods=["GET"])
+@app.route(
+    "/status",
+    methods=["GET"]
+)
 def status():
 
     all_memory = load_all_user_memory()
@@ -1141,6 +1464,9 @@ def status():
         "user_specific_memory":
             True,
 
+        "database":
+            bool(DATABASE_URL),
+
         "users":
             len(load_users()),
 
@@ -1153,7 +1479,10 @@ def status():
 # HOME / HEALTH CHECK
 # ============================================================
 
-@app.route("/", methods=["GET"])
+@app.route(
+    "/",
+    methods=["GET"]
+)
 def home():
 
     return jsonify({
@@ -1189,6 +1518,12 @@ if __name__ == "__main__":
     print("SIGNUP + LOGIN ACTIVE")
     print("USER-SPECIFIC MEMORY ACTIVE")
     print("USER-SPECIFIC HISTORY ACTIVE")
+
+    if DATABASE_URL:
+        print("POSTGRESQL DATABASE ACTIVE")
+    else:
+        print("LOCAL JSON STORAGE ACTIVE")
+
     print("==========================================")
     print("Server: http://127.0.0.1:5000")
     print("==========================================")
