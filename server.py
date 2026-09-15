@@ -7,10 +7,13 @@ import os
 import psycopg2
 from psycopg2.extras import RealDictCursor, Json
 
+# OpenAI
+from openai import OpenAI
+
 
 # ============================================================
-# NEXORA AI 6.7
-# USER SYSTEM + USER-SPECIFIC MEMORY
+# NEXORA AI 7.0
+# OPENAI + POSTGRESQL + ACCOUNTS + MEMORY + HISTORY
 # ============================================================
 
 app = Flask(__name__)
@@ -28,7 +31,7 @@ CORS(
 
 
 # ============================================================
-# FILES
+# CONFIGURATION
 # ============================================================
 
 USERS_FILE = "users.json"
@@ -36,12 +39,50 @@ USER_MEMORY_FILE = "nexora_users_memory.json"
 
 MAX_HISTORY = 30
 
+DATABASE_URL = os.environ.get("DATABASE_URL")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+
+# Cost-sensitive model suitable for a public assistant.
+OPENAI_MODEL = os.environ.get(
+    "OPENAI_MODEL",
+    "gpt-5.6-luna"
+)
+
+# Keep the amount of previous conversation sent to OpenAI
+# reasonably small so requests don't become unnecessarily large.
+OPENAI_HISTORY_LIMIT = 12
+
+
+# ============================================================
+# OPENAI CLIENT
+# ============================================================
+
+openai_client = None
+
+if OPENAI_API_KEY:
+    try:
+        openai_client = OpenAI(
+            api_key=OPENAI_API_KEY
+        )
+        print("OpenAI API client initialized.")
+    except Exception as error:
+        print(
+            "OpenAI client initialization error:",
+            error
+        )
+else:
+    print(
+        "OPENAI_API_KEY not found. "
+        "NEXORA will use the local fallback engine."
+    )
+
 
 # ============================================================
 # DEFAULT USER MEMORY
 # ============================================================
 
 def create_default_memory():
+
     return {
         "last_question": "",
         "last_topic": "",
@@ -56,18 +97,17 @@ def create_default_memory():
 
 
 # ============================================================
-# DATABASE / STORAGE
+# DATABASE CONNECTION
 # ============================================================
-
-DATABASE_URL = os.environ.get("DATABASE_URL")
-
 
 def get_db_connection():
 
     if not DATABASE_URL:
         return None
 
-    return psycopg2.connect(DATABASE_URL)
+    return psycopg2.connect(
+        DATABASE_URL
+    )
 
 
 def init_database():
@@ -116,7 +156,7 @@ def init_database():
 
 
 # ============================================================
-# USER ACCOUNT STORAGE
+# USER STORAGE
 # ============================================================
 
 def load_users():
@@ -143,7 +183,10 @@ def load_users():
 
         except Exception as error:
 
-            print("Users load error:", error)
+            print(
+                "Users load error:",
+                error
+            )
 
             return []
 
@@ -175,7 +218,10 @@ def load_users():
 
     except Exception as error:
 
-        print("Users load error:", error)
+        print(
+            "Users load error:",
+            error
+        )
 
         return []
 
@@ -207,7 +253,10 @@ def save_users(users):
 
         except Exception as error:
 
-            print("Users save error:", error)
+            print(
+                "Users save error:",
+                error
+            )
 
             return False
 
@@ -256,7 +305,10 @@ def save_users(users):
 
         connection.rollback()
 
-        print("Users save error:", error)
+        print(
+            "Users save error:",
+            error
+        )
 
         return False
 
@@ -266,7 +318,7 @@ def save_users(users):
 
 
 # ============================================================
-# USER MEMORY STORAGE
+# MEMORY STORAGE
 # ============================================================
 
 def load_all_user_memory():
@@ -479,7 +531,7 @@ except Exception as error:
 
 
 # ============================================================
-# CHECK USER
+# USER LOOKUP
 # ============================================================
 
 def find_user(username):
@@ -558,10 +610,12 @@ def signup():
 
     new_user = {
         "username": username,
+
         "password_hash":
             generate_password_hash(
                 password
             ),
+
         "created_at":
             datetime.now().isoformat()
     }
@@ -584,6 +638,7 @@ def signup():
     return jsonify({
         "message":
         "Account created successfully.",
+
         "username":
         username
     }), 201
@@ -660,6 +715,7 @@ def login():
     return jsonify({
         "message":
         "Login successful.",
+
         "username":
         user["username"]
     }), 200
@@ -1011,7 +1067,7 @@ def detect_intent(text):
 
 
 # ============================================================
-# KNOWLEDGE ENGINE
+# LOCAL FALLBACK KNOWLEDGE
 # ============================================================
 
 def knowledge_search(question):
@@ -1049,7 +1105,7 @@ def knowledge_search(question):
 
 
 # ============================================================
-# RESPONSE ENGINE
+# LOCAL FALLBACK RESPONSE
 # ============================================================
 
 def contextual_response(
@@ -1079,7 +1135,7 @@ def contextual_response(
 
         return (
             "I'm NEXORA AI — your personal AI assistant "
-            "built with a Flask backend and a web interface."
+            "powered by my backend."
         )
 
     if intent == "help":
@@ -1095,45 +1151,127 @@ def contextual_response(
 
         return knowledge_answer
 
-    topic = detect_topic(text)
-
-    subject = detect_subject(text)
-
-    if subject:
-
-        return (
-            f"I detected that you're asking about "
-            f"{subject}. Give me the exact question "
-            "and I'll help you work through it."
-        )
-
-    if topic:
-
-        return (
-            f"I detected the topic as {topic}. "
-            "Tell me exactly what you want to know "
-            "and we'll go from there."
-        )
-
-    if (
-        memory["last_question"]
-        and is_follow_up(text)
-    ):
-
-        return (
-            "Based on what we were discussing before, "
-            f"you were asking about: "
-            f"{memory['last_question']}\n\n"
-            "Give me a little more detail and "
-            "I'll continue from there."
-        )
-
     return (
-        "I understand the message, but I need "
-        "a little more detail to give you "
-        "a useful answer."
+        "I understand the message, but the AI service "
+        "is temporarily unavailable. Please try again."
     )
 
+
+# ============================================================
+# OPENAI RESPONSE
+# ============================================================
+
+def generate_openai_response(
+    question,
+    memory
+):
+
+    if openai_client is None:
+
+        return None
+
+    try:
+
+        history = get_recent_history(
+            memory,
+            OPENAI_HISTORY_LIMIT
+        )
+
+        context_lines = []
+
+        for item in history:
+
+            user_text = str(
+                item.get("user", "")
+            )
+
+            assistant_text = str(
+                item.get("assistant", "")
+            )
+
+            if user_text:
+                context_lines.append(
+                    "User: "
+                    + user_text
+                )
+
+            if assistant_text:
+                context_lines.append(
+                    "NEXORA: "
+                    + assistant_text
+                )
+
+        conversation_context = "\n".join(
+            context_lines
+        )
+
+        system_instructions = """
+You are NEXORA AI, a helpful personal AI assistant.
+
+Be clear, useful, friendly and honest.
+
+You are running inside a Flask application.
+Do not reveal API keys, environment variables,
+database credentials, internal server details,
+or private implementation secrets.
+
+Use the conversation context when it is relevant.
+Do not claim to remember information that is not
+present in the supplied context.
+
+If the user asks something you are unsure about,
+say so rather than inventing facts.
+
+Keep answers appropriate for a general audience.
+"""
+
+        if conversation_context:
+
+            user_input = (
+                "Recent conversation:\n"
+                + conversation_context
+                + "\n\nCurrent user message:\n"
+                + question
+            )
+
+        else:
+
+            user_input = question
+
+        response = openai_client.responses.create(
+
+            model=OPENAI_MODEL,
+
+            instructions=system_instructions,
+
+            input=user_input
+        )
+
+        answer = getattr(
+            response,
+            "output_text",
+            None
+        )
+
+        if answer:
+
+            return answer.strip()
+
+        return None
+
+    except Exception as error:
+
+        print(
+            "OpenAI API error:",
+            error
+        )
+
+        return None
+
+
+# ============================================================
+# RESPONSE ENGINE
+# ============================================================
 
 def generate_response(
     question,
@@ -1145,12 +1283,21 @@ def generate_response(
         memory
     )
 
-    answer = contextual_response(
+    # OpenAI is the primary intelligence engine.
+    answer = generate_openai_response(
         resolved_question,
         memory
     )
 
-    return answer
+    if answer:
+
+        return answer
+
+    # If OpenAI is unavailable, use local fallback.
+    return contextual_response(
+        resolved_question,
+        memory
+    )
 
 
 # ============================================================
@@ -1228,6 +1375,15 @@ def chat():
             "Please enter a message."
         }), 400
 
+    # Basic request-size protection.
+    if len(question) > 8000:
+
+        return jsonify({
+            "reply":
+            "That message is too long. "
+            "Please shorten it and try again."
+        }), 400
+
     user = find_user(username)
 
     if user is None:
@@ -1264,7 +1420,10 @@ def chat():
     )
 
     return jsonify({
-        "reply": answer,
+
+        "reply":
+            answer,
+
         "username":
             user["username"]
     })
@@ -1358,13 +1517,14 @@ def history():
     )
 
     return jsonify({
+
         "username":
             user["username"],
 
         "history":
             get_recent_history(
                 user_memory,
-                30
+                MAX_HISTORY
             )
     })
 
@@ -1447,7 +1607,15 @@ def status():
             "online",
 
         "version":
-            "6.7",
+            "7.0",
+
+        "openai":
+            bool(openai_client),
+
+        "model":
+            OPENAI_MODEL
+            if openai_client
+            else None,
 
         "knowledge_engine":
             True,
@@ -1491,10 +1659,15 @@ def home():
             "NEXORA AI",
 
         "version":
-            "6.7",
+            "7.0",
 
         "status":
             "online",
+
+        "ai":
+            "OpenAI"
+            if openai_client
+            else "Local fallback",
 
         "message":
             "NEXORA backend is running."
@@ -1509,9 +1682,11 @@ if __name__ == "__main__":
 
     print("")
     print("==========================================")
-    print("           NEXORA AI 6.7")
+    print("           NEXORA AI 7.0")
     print("==========================================")
-    print("KNOWLEDGE EXPANSION ACTIVE")
+    print("OPENAI AI ENGINE ACTIVE"
+          if openai_client
+          else "LOCAL AI FALLBACK ACTIVE")
     print("CONTEXT ENGINE ACTIVE")
     print("CONVERSATION HISTORY ACTIVE")
     print("USER SYSTEM ACTIVE")
