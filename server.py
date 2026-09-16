@@ -5,6 +5,7 @@ from datetime import datetime
 import json
 import os
 import re
+import base64
 import psycopg2
 from psycopg2.extras import RealDictCursor, Json
 
@@ -13,9 +14,9 @@ from openai import OpenAI
 
 
 # ============================================================
-# NEXORA AI 8.0
+# NEXORA AI 9.0
 # SMART MEMORY + PERSONALITY + OPENAI + POSTGRESQL
-# ACCOUNTS + HISTORY + CONTEXT ENGINE
+# ACCOUNTS + HISTORY + CONTEXT ENGINE + IMAGE GENERATION
 # ============================================================
 
 app = Flask(__name__)
@@ -45,9 +46,16 @@ MAX_SAVED_MEMORIES = 50
 DATABASE_URL = os.environ.get("DATABASE_URL")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
+# Normal NEXORA text model
 OPENAI_MODEL = os.environ.get(
     "OPENAI_MODEL",
     "gpt-5.6-luna"
+)
+
+# Image model
+OPENAI_IMAGE_MODEL = os.environ.get(
+    "OPENAI_IMAGE_MODEL",
+    "gpt-image-2.5-flare"
 )
 
 OPENAI_HISTORY_LIMIT = 12
@@ -60,7 +68,9 @@ OPENAI_HISTORY_LIMIT = 12
 openai_client = None
 
 if OPENAI_API_KEY:
+
     try:
+
         openai_client = OpenAI(
             api_key=OPENAI_API_KEY
         )
@@ -253,7 +263,11 @@ def find_user(username):
 
         for user in users:
 
-            if user.get("username", "").lower() == username:
+            if user.get(
+                "username",
+                ""
+            ).lower() == username:
+
                 return user
 
         return None
@@ -384,7 +398,9 @@ def load_all_memory():
 
     if not DATABASE_URL:
 
-        if not os.path.exists(USER_MEMORY_FILE):
+        if not os.path.exists(
+            USER_MEMORY_FILE
+        ):
 
             return {}
 
@@ -800,12 +816,263 @@ def detect_subject(text):
 
 
 # ============================================================
+# IMAGE REQUEST DETECTION
+# ============================================================
+
+def is_image_request(text):
+
+    clean = text.lower().strip()
+
+    image_phrases = [
+
+        "generate an image",
+        "generate a picture",
+        "generate an artwork",
+        "generate art",
+        "create an image",
+        "create a picture",
+        "create an artwork",
+        "create art",
+        "make an image",
+        "make a picture",
+        "make an artwork",
+        "make art",
+        "draw an image",
+        "draw a picture",
+        "draw me",
+        "draw this",
+        "show me an image",
+        "show me a picture",
+        "show me a photo",
+        "image of",
+        "picture of",
+        "photo of",
+        "artwork of",
+        "illustration of",
+        "poster of",
+        "design an image",
+        "design a poster"
+    ]
+
+    for phrase in image_phrases:
+
+        if phrase in clean:
+            return True
+
+    # Natural commands such as:
+    # "Create a futuristic city at night"
+    image_starters = [
+        "create ",
+        "generate ",
+        "make ",
+        "draw ",
+        "design "
+    ]
+
+    visual_words = [
+        "image",
+        "picture",
+        "photo",
+        "artwork",
+        "illustration",
+        "poster",
+        "portrait",
+        "wallpaper",
+        "scene",
+        "character",
+        "logo"
+    ]
+
+    if any(
+        clean.startswith(starter)
+        for starter in image_starters
+    ):
+
+        if any(
+            word in clean
+            for word in visual_words
+        ):
+
+            return True
+
+    return False
+
+
+# ============================================================
+# IMAGE PROMPT CLEANUP
+# ============================================================
+
+def build_image_prompt(message):
+
+    prompt = message.strip()
+
+    prefixes = [
+        "generate an image of ",
+        "generate a picture of ",
+        "generate an artwork of ",
+        "generate art of ",
+        "create an image of ",
+        "create a picture of ",
+        "create an artwork of ",
+        "create art of ",
+        "make an image of ",
+        "make a picture of ",
+        "make an artwork of ",
+        "make art of ",
+        "draw an image of ",
+        "draw a picture of ",
+        "draw ",
+        "design an image of ",
+        "design a poster of ",
+        "image of ",
+        "picture of ",
+        "photo of ",
+        "artwork of ",
+        "illustration of "
+    ]
+
+    lower_prompt = prompt.lower()
+
+    for prefix in prefixes:
+
+        if lower_prompt.startswith(prefix):
+
+            prompt = prompt[len(prefix):].strip()
+            break
+
+    if not prompt:
+
+        prompt = message.strip()
+
+    return prompt
+
+
+# ============================================================
+# IMAGE GENERATION ENGINE
+# ============================================================
+
+def generate_image(user_prompt):
+
+    if not openai_client:
+
+        return {
+            "success": False,
+            "error": (
+                "Image generation is unavailable because "
+                "the OpenAI API key is not configured."
+            )
+        }
+
+    prompt = build_image_prompt(
+        user_prompt
+    )
+
+    if not prompt:
+
+        return {
+            "success": False,
+            "error": "Please describe the image you want."
+        }
+
+    if len(prompt) > 4000:
+
+        prompt = prompt[:4000]
+
+    try:
+
+        print(
+            "Generating image with:",
+            OPENAI_IMAGE_MODEL
+        )
+
+        result = openai_client.images.generate(
+            model=OPENAI_IMAGE_MODEL,
+            prompt=prompt,
+            size="1024x1024",
+            quality="medium"
+        )
+
+        if not result or not result.data:
+
+            return {
+                "success": False,
+                "error": "The image service returned no image."
+            }
+
+        image_data = result.data[0]
+
+        # OpenAI image generation responses normally
+        # provide base64 image data for this workflow.
+        image_base64 = getattr(
+            image_data,
+            "b64_json",
+            None
+        )
+
+        if image_base64:
+
+            image_url = (
+                "data:image/png;base64,"
+                + image_base64
+            )
+
+            return {
+                "success": True,
+                "image_url": image_url,
+                "prompt": prompt
+            }
+
+        # Compatibility fallback if the API returns
+        # a hosted URL instead.
+        image_url = getattr(
+            image_data,
+            "url",
+            None
+        )
+
+        if image_url:
+
+            return {
+                "success": True,
+                "image_url": image_url,
+                "prompt": prompt
+            }
+
+        return {
+            "success": False,
+            "error": (
+                "The image service returned an "
+                "unsupported image format."
+            )
+        }
+
+    except Exception as error:
+
+        print(
+            "Image generation error:",
+            error
+        )
+
+        return {
+            "success": False,
+            "error": (
+                "I couldn't generate that image right now. "
+                "Please try again."
+            )
+        }
+
+
+# ============================================================
 # INTENT DETECTION
 # ============================================================
 
 def detect_intent(text):
 
     clean = text.lower().strip()
+
+    if is_image_request(clean):
+
+        return "image_generation"
 
     if clean in [
         "hi",
@@ -994,8 +1261,10 @@ def add_saved_memory(
 
         if (
             item.get("category") == category
-            and item.get("value", "").lower()
-            == value.lower()
+            and item.get(
+                "value",
+                ""
+            ).lower() == value.lower()
         ):
 
             return
@@ -1022,7 +1291,6 @@ def extract_memories(
 
     lower = text.lower()
 
-    # Explicit memory requests
     explicit_patterns = [
 
         (
@@ -1124,7 +1392,6 @@ def extract_memories(
                     value
                 )
 
-    # Explicit "remember this"
     remember_match = re.search(
         r"remember(?: that)? (.+)",
         text,
@@ -1720,6 +1987,73 @@ def chat():
         username
     )
 
+    # ========================================================
+    # IMAGE GENERATION REQUEST
+    # ========================================================
+
+    if is_image_request(message):
+
+        image_result = generate_image(
+            message
+        )
+
+        if image_result.get("success"):
+
+            answer = (
+                "Done 🎨 I generated the image "
+                "you requested."
+            )
+
+            save_context(
+                memory,
+                message,
+                answer
+            )
+
+            save_user_memory(
+                username,
+                memory
+            )
+
+            return jsonify({
+                "reply": answer,
+                "image_url": image_result.get(
+                    "image_url"
+                ),
+                "image_prompt": image_result.get(
+                    "prompt",
+                    ""
+                ),
+                "image_generated": True,
+                "username": username
+            })
+
+        error_message = image_result.get(
+            "error",
+            "Image generation failed."
+        )
+
+        save_context(
+            memory,
+            message,
+            error_message
+        )
+
+        save_user_memory(
+            username,
+            memory
+        )
+
+        return jsonify({
+            "reply": error_message,
+            "image_generated": False,
+            "username": username
+        }), 500
+
+    # ========================================================
+    # NORMAL TEXT RESPONSE
+    # ========================================================
+
     answer = generate_response(
         username,
         message,
@@ -1739,6 +2073,7 @@ def chat():
 
     return jsonify({
         "reply": answer,
+        "image_generated": False,
         "username": username
     })
 
@@ -2017,7 +2352,7 @@ def status():
 
         "status": "online",
 
-        "version": "8.0",
+        "version": "9.0",
 
         "openai": bool(
             openai_client
@@ -2025,6 +2360,16 @@ def status():
 
         "model": (
             OPENAI_MODEL
+            if openai_client
+            else None
+        ),
+
+        "image_generation": bool(
+            openai_client
+        ),
+
+        "image_model": (
+            OPENAI_IMAGE_MODEL
             if openai_client
             else None
         ),
@@ -2071,7 +2416,7 @@ def home():
 
         "name": "NEXORA AI",
 
-        "version": "8.0",
+        "version": "9.0",
 
         "status": "online",
 
@@ -2085,6 +2430,18 @@ def home():
 
         "personality": "Active",
 
+        "image_generation": (
+            "Active"
+            if openai_client
+            else "Unavailable"
+        ),
+
+        "image_model": (
+            OPENAI_IMAGE_MODEL
+            if openai_client
+            else None
+        ),
+
         "database": (
             "PostgreSQL"
             if DATABASE_URL
@@ -2092,7 +2449,7 @@ def home():
         ),
 
         "message": (
-            "NEXORA AI 8.0 backend is running."
+            "NEXORA AI 9.0 backend is running."
         )
     })
 
@@ -2105,15 +2462,23 @@ init_database()
 
 print("")
 print("============================================================")
-print("              NEXORA AI 8.0")
+print("              NEXORA AI 9.0")
 print("============================================================")
 print(
     "OpenAI:",
     "ACTIVE" if openai_client else "FALLBACK"
 )
 print(
-    "Model:",
+    "Text model:",
     OPENAI_MODEL if openai_client else "Local"
+)
+print(
+    "Image generation:",
+    "ACTIVE" if openai_client else "UNAVAILABLE"
+)
+print(
+    "Image model:",
+    OPENAI_IMAGE_MODEL if openai_client else "None"
 )
 print("Smart memory: ACTIVE")
 print("Personality engine: ACTIVE")
