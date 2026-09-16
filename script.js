@@ -19,34 +19,54 @@ const signupPassword = document.getElementById("signupPassword");
 const loginMessage = document.getElementById("loginMessage");
 const signupMessage = document.getElementById("signupMessage");
 
-const showSignup = document.getElementById("showSignupButton");
-const showLogin = document.getElementById("showLoginButton");
+const showSignup =
+    document.getElementById("showSignupButton");
+
+const showLogin =
+    document.getElementById("showLoginButton");
 
 
 // ===============================
 // APP ELEMENTS
 // ===============================
 
-const messageInput = document.getElementById("messageInput");
-const sendButton = document.getElementById("sendButton");
-const chatBox = document.getElementById("chatBox");
+const messageInput =
+    document.getElementById("messageInput");
 
-const clearButton = document.getElementById("clearButton");
-const profileButton = document.getElementById("profileButton");
+const sendButton =
+    document.getElementById("sendButton");
 
-const profilePanel = document.getElementById("profilePanel");
-const profileUsername = document.getElementById("profileUsername");
-const profileCount = document.getElementById("profileCount");
+const chatBox =
+    document.getElementById("chatBox");
 
-const logoutButton = document.getElementById("logoutButton");
+const clearButton =
+    document.getElementById("clearButton");
+
+const profileButton =
+    document.getElementById("profileButton");
+
+const profilePanel =
+    document.getElementById("profilePanel");
+
+const profileUsername =
+    document.getElementById("profileUsername");
+
+const profileCount =
+    document.getElementById("profileCount");
+
+const logoutButton =
+    document.getElementById("logoutButton");
 
 
 // ===============================
 // VOICE ELEMENTS
 // ===============================
 
-const voiceButton = document.getElementById("voiceButton");
-const voiceStatus = document.getElementById("voiceStatus");
+const voiceButton =
+    document.getElementById("voiceButton");
+
+const voiceStatus =
+    document.getElementById("voiceStatus");
 
 const voiceReplyToggle =
     document.getElementById("voiceReplyToggle");
@@ -74,8 +94,15 @@ let currentUser =
 // STARTUP
 // ===============================
 
-if (currentUser) {
-    showApp();
+// Always begin on the authentication screen.
+// Login is required before entering the app.
+
+if (authScreen) {
+    authScreen.style.display = "flex";
+}
+
+if (appScreen) {
+    appScreen.style.display = "none";
 }
 
 
@@ -104,140 +131,159 @@ showLogin?.addEventListener("click", () => {
 // SIGNUP
 // ===============================
 
-signupForm?.addEventListener("submit", async (event) => {
-    event.preventDefault();
+signupForm?.addEventListener(
+    "submit",
+    async (event) => {
+        event.preventDefault();
 
-    const username =
-        signupUsername.value.trim();
+        const username =
+            signupUsername.value.trim();
 
-    const password =
-        signupPassword.value.trim();
+        const password =
+            signupPassword.value.trim();
 
-    if (!username || !password) {
-        signupMessage.textContent =
-            "Please enter a username and password.";
-        return;
-    }
-
-    signupMessage.textContent =
-        "Creating account...";
-
-    try {
-        const response =
-            await fetch(`${API_URL}/signup`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    username,
-                    password
-                })
-            });
-
-        const data =
-            await response.json();
-
-        if (!response.ok) {
+        if (!username || !password) {
             signupMessage.textContent =
-                data.error ||
-                "Signup failed.";
+                "Please enter a username and password.";
+
             return;
         }
 
         signupMessage.textContent =
-            "Account created successfully!";
+            "Creating account...";
 
-        signupUsername.value = "";
-        signupPassword.value = "";
+        try {
+            const response =
+                await fetch(`${API_URL}/signup`, {
+                    method: "POST",
 
-        setTimeout(() => {
-            signupForm.style.display = "none";
-            loginForm.style.display = "block";
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-            loginUsername.value =
-                username;
+                    body: JSON.stringify({
+                        username,
+                        password
+                    })
+                });
 
-            loginMessage.textContent =
-                "You can now log in.";
-        }, 700);
+            const data =
+                await response.json();
 
-    } catch (error) {
-        console.error(error);
+            if (!response.ok) {
+                signupMessage.textContent =
+                    data.error ||
+                    "Signup failed.";
 
-        signupMessage.textContent =
-            "Could not connect to NEXORA.";
+                return;
+            }
+
+            signupMessage.textContent =
+                "Account created successfully!";
+
+            signupUsername.value = "";
+            signupPassword.value = "";
+
+            setTimeout(() => {
+                signupForm.style.display =
+                    "none";
+
+                loginForm.style.display =
+                    "block";
+
+                loginUsername.value =
+                    username;
+
+                loginMessage.textContent =
+                    "You can now log in.";
+            }, 700);
+
+        } catch (error) {
+            console.error(error);
+
+            signupMessage.textContent =
+                "Could not connect to NEXORA.";
+        }
     }
-});
+);
 
 
 // ===============================
 // LOGIN
 // ===============================
 
-loginForm?.addEventListener("submit", async (event) => {
-    event.preventDefault();
+loginForm?.addEventListener(
+    "submit",
+    async (event) => {
+        event.preventDefault();
 
-    const username =
-        loginUsername.value.trim();
+        const username =
+            loginUsername.value.trim();
 
-    const password =
-        loginPassword.value.trim();
+        const password =
+            loginPassword.value.trim();
 
-    if (!username || !password) {
-        loginMessage.textContent =
-            "Please enter your username and password.";
-        return;
-    }
-
-    loginMessage.textContent =
-        "Logging in...";
-
-    try {
-        const response =
-            await fetch(`${API_URL}/login`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    username,
-                    password
-                })
-            });
-
-        const data =
-            await response.json();
-
-        if (!response.ok) {
+        if (!username || !password) {
             loginMessage.textContent =
-                data.error ||
-                "Login failed.";
+                "Please enter your username and password.";
+
             return;
         }
 
-        currentUser =
-            data.username || username;
-
-        localStorage.setItem(
-            "nexora_username",
-            currentUser
-        );
-
         loginMessage.textContent =
-            "Login successful.";
+            "Logging in...";
 
-        setTimeout(() => {
-            showApp();
-        }, 400);
+        try {
+            const response =
+                await fetch(`${API_URL}/login`, {
+                    method: "POST",
 
-    } catch (error) {
-        console.error(error);
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-        loginMessage.textContent =
-            "Could not connect to NEXORA.";
+                    body: JSON.stringify({
+                        username,
+                        password
+                    })
+                });
+
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+                loginMessage.textContent =
+                    data.error ||
+                    "Login failed.";
+
+                return;
+            }
+
+            currentUser =
+                data.username || username;
+
+            localStorage.setItem(
+                "nexora_username",
+                currentUser
+            );
+
+            loginMessage.textContent =
+                "Login successful.";
+
+            setTimeout(() => {
+                showApp();
+            }, 400);
+
+        } catch (error) {
+            console.error(error);
+
+            loginMessage.textContent =
+                "Could not connect to NEXORA.";
+        }
     }
-});
+);
 
 
 // ===============================
@@ -268,19 +314,24 @@ function showApp() {
 // PROFILE
 // ===============================
 
-profileButton?.addEventListener("click", () => {
-    if (!profilePanel) return;
+profileButton?.addEventListener(
+    "click",
+    () => {
+        if (!profilePanel) return;
 
-    const visible =
-        profilePanel.style.display === "block";
+        const visible =
+            profilePanel.style.display ===
+            "block";
 
-    profilePanel.style.display =
-        visible ? "none" : "block";
+        profilePanel.style.display =
+            visible ? "none" : "block";
 
-    if (!visible) {
-        loadProfile();
+        if (!visible) {
+            loadProfile();
+        }
     }
-});
+);
+
 
 async function loadProfile() {
     if (!currentUser) return;
@@ -317,18 +368,21 @@ async function loadProfile() {
 // LOGOUT
 // ===============================
 
-logoutButton?.addEventListener("click", () => {
-    stopSpeaking();
-    stopListening();
+logoutButton?.addEventListener(
+    "click",
+    () => {
+        stopSpeaking();
+        stopListening();
 
-    localStorage.removeItem(
-        "nexora_username"
-    );
+        localStorage.removeItem(
+            "nexora_username"
+        );
 
-    currentUser = null;
+        currentUser = null;
 
-    location.reload();
-});
+        location.reload();
+    }
+);
 
 
 // ===============================
@@ -342,7 +396,8 @@ function addMessage(text, sender) {
     message.className =
         `message ${sender}`;
 
-    message.textContent = text;
+    message.textContent =
+        text;
 
     chatBox.appendChild(message);
 
@@ -357,7 +412,10 @@ function addMessage(text, sender) {
 // ADD GENERATED IMAGE
 // ===============================
 
-function addImageMessage(imageUrl, prompt) {
+function addImageMessage(
+    imageUrl,
+    prompt
+) {
     const wrapper =
         document.createElement("div");
 
@@ -370,12 +428,15 @@ function addImageMessage(imageUrl, prompt) {
     image.className =
         "generated-image";
 
-    image.src = imageUrl;
+    image.src =
+        imageUrl;
 
     image.alt =
-        prompt || "Generated image";
+        prompt ||
+        "Generated image";
 
-    image.loading = "lazy";
+    image.loading =
+        "lazy";
 
     wrapper.appendChild(image);
 
@@ -401,7 +462,11 @@ async function typeMessage(
     const words =
         text.split(" ");
 
-    for (let i = 0; i < words.length; i++) {
+    for (
+        let i = 0;
+        i < words.length;
+        i++
+    ) {
         element.textContent +=
             (i === 0 ? "" : " ") +
             words[i];
@@ -409,8 +474,12 @@ async function typeMessage(
         chatBox.scrollTop =
             chatBox.scrollHeight;
 
-        await new Promise(resolve =>
-            setTimeout(resolve, 18)
+        await new Promise(
+            resolve =>
+                setTimeout(
+                    resolve,
+                    18
+                )
         );
     }
 }
@@ -431,6 +500,7 @@ async function sendMessage() {
             "Please log in first.",
             "ai"
         );
+
         return;
     }
 
@@ -451,16 +521,25 @@ async function sendMessage() {
 
     try {
         const response =
-            await fetch(`${API_URL}/chat`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    username: currentUser,
-                    message: message
-                })
-            });
+            await fetch(
+                `${API_URL}/chat`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        username:
+                            currentUser,
+
+                        message:
+                            message
+                    })
+                }
+            );
 
         const data =
             await response.json();
@@ -489,13 +568,16 @@ async function sendMessage() {
                 data.reply
             );
 
-            speakReply(data.reply);
+            speakReply(
+                data.reply
+            );
         }
 
         if (data.image_url) {
             addImageMessage(
                 data.image_url,
-                data.image_prompt || message
+                data.image_prompt ||
+                message
             );
         }
 
@@ -510,7 +592,9 @@ async function sendMessage() {
         );
 
     } finally {
-        sendButton.disabled = false;
+        sendButton.disabled =
+            false;
+
         messageInput.focus();
     }
 }
@@ -538,6 +622,7 @@ messageInput?.addEventListener(
             !event.shiftKey
         ) {
             event.preventDefault();
+
             sendMessage();
         }
     }
@@ -559,10 +644,12 @@ clearButton?.addEventListener(
                     `${API_URL}/clear`,
                     {
                         method: "POST",
+
                         headers: {
                             "Content-Type":
                                 "application/json"
                         },
+
                         body: JSON.stringify({
                             username:
                                 currentUser
@@ -615,14 +702,18 @@ async function loadHistory() {
 
         if (
             !response.ok ||
-            !Array.isArray(data.history)
+            !Array.isArray(
+                data.history
+            )
         ) {
             return;
         }
 
         chatBox.innerHTML = "";
 
-        if (data.history.length === 0) {
+        if (
+            data.history.length === 0
+        ) {
             addMessage(
                 `Welcome back, ${currentUser}! I'm NEXORA. How can I help you?`,
                 "ai"
@@ -631,7 +722,9 @@ async function loadHistory() {
             return;
         }
 
-        for (const item of data.history) {
+        for (
+            const item of data.history
+        ) {
             if (
                 item.user &&
                 item.user.trim()
@@ -673,7 +766,8 @@ function setupVoiceInput() {
     if (!voiceButton) return;
 
     if (!SpeechRecognition) {
-        voiceButton.disabled = true;
+        voiceButton.disabled =
+            true;
 
         voiceButton.title =
             "Voice input is not supported in this browser.";
@@ -689,33 +783,41 @@ function setupVoiceInput() {
     speechRecognition =
         new SpeechRecognition();
 
-    speechRecognition.continuous = false;
-    speechRecognition.interimResults = true;
-    speechRecognition.lang = "en-US";
+    speechRecognition.continuous =
+        false;
 
-    speechRecognition.onstart = () => {
-        isListening = true;
+    speechRecognition.interimResults =
+        true;
 
-        voiceButton.textContent =
-            "⏹️";
+    speechRecognition.lang =
+        "en-US";
 
-        voiceButton.classList.add(
-            "listening"
-        );
+    speechRecognition.onstart =
+        () => {
+            isListening = true;
 
-        if (voiceStatus) {
-            voiceStatus.textContent =
-                "Listening... speak now";
-        }
-    };
+            voiceButton.textContent =
+                "⏹️";
+
+            voiceButton.classList.add(
+                "listening"
+            );
+
+            if (voiceStatus) {
+                voiceStatus.textContent =
+                    "Listening... speak now";
+            }
+        };
 
     speechRecognition.onresult =
         (event) => {
             let finalText = "";
 
             for (
-                let i = event.resultIndex;
-                i < event.results.length;
+                let i =
+                    event.resultIndex;
+                i <
+                    event.results.length;
                 i++
             ) {
                 finalText +=
@@ -750,29 +852,34 @@ function setupVoiceInput() {
             stopListening();
         };
 
-    speechRecognition.onend = () => {
-        isListening = false;
+    speechRecognition.onend =
+        () => {
+            isListening = false;
 
-        voiceButton.textContent =
-            "🎙️";
+            voiceButton.textContent =
+                "🎙️";
 
-        voiceButton.classList.remove(
-            "listening"
-        );
+            voiceButton.classList.remove(
+                "listening"
+            );
 
-        const spokenText =
-            messageInput.value.trim();
+            const spokenText =
+                messageInput.value.trim();
 
-        if (spokenText) {
-            sendMessage();
-        }
-
-        setTimeout(() => {
-            if (!isListening && voiceStatus) {
-                voiceStatus.textContent = "";
+            if (spokenText) {
+                sendMessage();
             }
-        }, 1500);
-    };
+
+            setTimeout(() => {
+                if (
+                    !isListening &&
+                    voiceStatus
+                ) {
+                    voiceStatus.textContent =
+                        "";
+                }
+            }, 1500);
+        };
 }
 
 
@@ -787,6 +894,7 @@ function startListening() {
 
     try {
         speechRecognition.start();
+
     } catch (error) {
         console.error(
             "Could not start microphone:",
@@ -807,6 +915,7 @@ function stopListening() {
 
     try {
         speechRecognition.stop();
+
     } catch (error) {
         // Already stopped
     }
@@ -873,22 +982,33 @@ function speakReply(text) {
             cleanText
         );
 
-    utterance.lang = "en-US";
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
+    utterance.lang =
+        "en-US";
+
+    utterance.rate =
+        1.0;
+
+    utterance.pitch =
+        1.0;
+
+    utterance.volume =
+        1.0;
 
     const voices =
-        window.speechSynthesis.getVoices();
+        window.speechSynthesis
+            .getVoices();
 
     const preferredVoice =
         voices.find(
             voice =>
-                voice.lang === "en-US"
+                voice.lang ===
+                "en-US"
         ) ||
         voices.find(
             voice =>
-                voice.lang.startsWith("en")
+                voice.lang.startsWith(
+                    "en"
+                )
         );
 
     if (preferredVoice) {
@@ -958,7 +1078,10 @@ const savedVoiceSetting =
     );
 
 if (voiceReplyToggle) {
-    if (savedVoiceSetting === "off") {
+    if (
+        savedVoiceSetting ===
+        "off"
+    ) {
         voiceReplyToggle.checked =
             false;
     } else {
@@ -987,6 +1110,7 @@ if (voiceReplyToggle) {
 if (speechSynthesisSupported) {
     window.speechSynthesis.onvoiceschanged =
         () => {
-            window.speechSynthesis.getVoices();
+            window.speechSynthesis
+                .getVoices();
         };
 }

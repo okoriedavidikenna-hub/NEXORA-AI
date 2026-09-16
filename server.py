@@ -5,7 +5,6 @@ from datetime import datetime
 import json
 import os
 import re
-import base64
 import psycopg2
 from psycopg2.extras import RealDictCursor, Json
 
@@ -55,7 +54,7 @@ OPENAI_MODEL = os.environ.get(
 # Image model
 OPENAI_IMAGE_MODEL = os.environ.get(
     "OPENAI_IMAGE_MODEL",
-    "gpt-image-2.5-flare"
+    "gpt-image-2"
 )
 
 OPENAI_HISTORY_LIMIT = 12
@@ -859,8 +858,6 @@ def is_image_request(text):
         if phrase in clean:
             return True
 
-    # Natural commands such as:
-    # "Create a futuristic city at night"
     image_starters = [
         "create ",
         "generate ",
@@ -1001,8 +998,6 @@ def generate_image(user_prompt):
 
         image_data = result.data[0]
 
-        # OpenAI image generation responses normally
-        # provide base64 image data for this workflow.
         image_base64 = getattr(
             image_data,
             "b64_json",
@@ -1022,8 +1017,6 @@ def generate_image(user_prompt):
                 "prompt": prompt
             }
 
-        # Compatibility fallback if the API returns
-        # a hosted URL instead.
         image_url = getattr(
             image_data,
             "url",
