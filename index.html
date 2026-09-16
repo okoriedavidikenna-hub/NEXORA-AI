@@ -19,18 +19,13 @@
 
 </head>
 
-
 <body>
-
 
 <!-- ===============================
      AUTH SCREEN
 ================================ -->
 
-<div
-    id="authScreen"
-    class="auth-screen"
->
+<div id="authScreen" class="auth-screen">
 
     <div class="auth-card">
 
@@ -38,103 +33,136 @@
             N
         </div>
 
-        <h1>
-            NEXORA AI
-        </h1>
+        <h1>NEXORA AI</h1>
 
         <p class="auth-subtitle">
             Your intelligent AI assistant
         </p>
 
 
-        <div class="auth-tabs">
-
-            <button
-                id="loginTab"
-                class="auth-tab active"
-                type="button"
-            >
-                Login
-            </button>
-
-            <button
-                id="signupTab"
-                class="auth-tab"
-                type="button"
-            >
-                Sign Up
-            </button>
-
-        </div>
-
-
         <!-- LOGIN -->
 
-        <div
-            id="loginForm"
-            class="auth-form"
-        >
+        <div id="loginScreen">
 
-            <input
-                type="text"
-                id="loginUsername"
-                placeholder="Username"
-                autocomplete="username"
-            >
+            <div class="auth-section-heading">
 
-            <input
-                type="password"
-                id="loginPassword"
-                placeholder="Password"
-                autocomplete="current-password"
-            >
+                <h2>Welcome Back</h2>
 
-            <button
-                id="loginButton"
-                class="auth-button"
-                type="button"
-            >
-                Login
-            </button>
+                <p>
+                    Sign in to continue to NEXORA
+                </p>
+
+            </div>
+
+
+            <div id="loginForm" class="auth-form">
+
+                <input
+                    type="text"
+                    id="loginUsername"
+                    placeholder="Username"
+                    autocomplete="username"
+                >
+
+                <input
+                    type="password"
+                    id="loginPassword"
+                    placeholder="Password"
+                    autocomplete="current-password"
+                >
+
+                <button
+                    id="loginButton"
+                    class="auth-button"
+                    type="button"
+                >
+                    Login
+                </button>
+
+            </div>
+
+
+            <div class="auth-switch">
+
+                <span>
+                    Don't have an account?
+                </span>
+
+                <button
+                    id="showSignupButton"
+                    type="button"
+                >
+                    Create Account
+                </button>
+
+            </div>
 
         </div>
 
 
         <!-- SIGN UP -->
 
-        <div
-            id="signupForm"
-            class="auth-form hidden"
-        >
+        <div id="signupScreen" class="hidden">
 
-            <input
-                type="text"
-                id="signupUsername"
-                placeholder="Choose a username"
-                autocomplete="username"
-            >
+            <div class="auth-section-heading">
 
-            <input
-                type="password"
-                id="signupPassword"
-                placeholder="Create a password"
-                autocomplete="new-password"
-            >
+                <h2>Create Account</h2>
 
-            <input
-                type="password"
-                id="signupConfirmPassword"
-                placeholder="Confirm password"
-                autocomplete="new-password"
-            >
+                <p>
+                    Join NEXORA and start your journey
+                </p>
 
-            <button
-                id="signupButton"
-                class="auth-button"
-                type="button"
-            >
-                Create Account
-            </button>
+            </div>
+
+
+            <div id="signupForm" class="auth-form">
+
+                <input
+                    type="text"
+                    id="signupUsername"
+                    placeholder="Choose a username"
+                    autocomplete="username"
+                >
+
+                <input
+                    type="password"
+                    id="signupPassword"
+                    placeholder="Create a password"
+                    autocomplete="new-password"
+                >
+
+                <input
+                    type="password"
+                    id="signupConfirmPassword"
+                    placeholder="Confirm password"
+                    autocomplete="new-password"
+                >
+
+                <button
+                    id="signupButton"
+                    class="auth-button"
+                    type="button"
+                >
+                    Create Account
+                </button>
+
+            </div>
+
+
+            <div class="auth-switch">
+
+                <span>
+                    Already have an account?
+                </span>
+
+                <button
+                    id="showLoginButton"
+                    type="button"
+                >
+                    Back to Login
+                </button>
+
+            </div>
 
         </div>
 
@@ -154,21 +182,16 @@
 </div>
 
 
-
 <!-- ===============================
-     MAIN APP
+     MAIN NEXORA APP
 ================================ -->
 
-<div
-    id="app"
-    class="app hidden"
->
+<div id="app" class="app hidden">
 
 
     <!-- HEADER -->
 
     <header class="header">
-
 
         <div class="logo">
 
@@ -176,15 +199,11 @@
                 N
             </div>
 
-            <div>
+            <div class="logo-text">
 
-                <h1>
-                    NEXORA
-                </h1>
+                <h1>NEXORA</h1>
 
-                <p>
-                    AI ASSISTANT
-                </p>
+                <p>AI ASSISTANT</p>
 
             </div>
 
@@ -192,7 +211,6 @@
 
 
         <div class="header-actions">
-
 
             <div class="status">
 
@@ -202,8 +220,6 @@
 
             </div>
 
-
-            <!-- PROFILE BUTTON -->
 
             <button
                 id="profileButton"
@@ -227,10 +243,7 @@
     </header>
 
 
-
-    <!-- ===============================
-         PROFILE PANEL
-    ================================= -->
+    <!-- PROFILE -->
 
     <div
         id="profilePanel"
@@ -239,9 +252,7 @@
 
         <div class="profile-header">
 
-            <h2>
-                Your Profile
-            </h2>
+            <h2>Your Profile</h2>
 
             <button
                 id="closeProfileButton"
@@ -264,10 +275,7 @@
         </p>
 
 
-        <h3
-            id="profileUsername"
-            class="profile-username"
-        >
+        <h3 id="profileUsername">
             User
         </h3>
 
@@ -278,9 +286,7 @@
                 Conversations
             </span>
 
-            <strong
-                id="conversationCount"
-            >
+            <strong id="conversationCount">
                 0
             </strong>
 
@@ -298,18 +304,11 @@
     </div>
 
 
-
-    <!-- ===============================
-         CHAT
-    ================================= -->
+    <!-- CHAT -->
 
     <main class="chat-container">
 
-
-        <div
-            id="chatBox"
-            class="chat-box"
-        >
+        <div id="chatBox" class="chat-box">
 
             <div class="welcome">
 
@@ -364,7 +363,6 @@
     </main>
 
 </div>
-
 
 
 <script src="script.js"></script>
