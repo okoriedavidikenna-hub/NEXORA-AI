@@ -917,3 +917,25 @@ body {
         width: 250px;
     }
 }
+
+/* ===============================
+   NEXORA GENERATED IMAGES
+   =============================== */
+
+.image-message {
+    max-width: 82%;
+    padding: 10px;
+    overflow: hidden;
+}
+
+.generated-image {
+    display: block;
+    width: 100%;
+    max-width: 520px;
+    height: auto;
+    border-radius: 14px;
+    object-fit: cover;
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.28),
+        0 0 20px rgba(80, 90, 255, 0.08);
+}
