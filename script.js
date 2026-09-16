@@ -33,6 +33,9 @@ const chatBox = document.getElementById("chatBox");
 const messageInput = document.getElementById("messageInput");
 const sendButton = document.getElementById("sendButton");
 
+const voiceButton = document.getElementById("voiceButton");
+const voiceStatus = document.getElementById("voiceStatus");
+
 const clearButton = document.getElementById("clearButton");
 
 const profileButton = document.getElementById("profileButton");
@@ -43,6 +46,20 @@ const profileUsername = document.getElementById("profileUsername");
 const conversationCount = document.getElementById("conversationCount");
 
 const logoutButton = document.getElementById("logoutButton");
+
+// ===============================
+// VOICE SETTINGS
+// ===============================
+
+let speechRecognition = null;
+let isListening = false;
+
+const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+const speechSynthesisSupported =
+    "speechSynthesis" in window;
 
 // ===============================
 // AUTH SCREEN SWITCHING
@@ -67,11 +84,9 @@ showLoginButton.addEventListener("click", () => {
 function showAuthMessage(message, success = false) {
     authMessage.textContent = message;
 
-    if (success) {
-        authMessage.style.color = "#6dff9c";
-    } else {
-        authMessage.style.color = "#ff6b6b";
-    }
+    authMessage.style.color = success
+        ? "#6dff9c"
+        : "#ff6b6b";
 }
 
 // ===============================
@@ -110,8 +125,8 @@ async function signup() {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                username: username,
-                password: password
+                username,
+                password
             })
         });
 
@@ -122,7 +137,10 @@ async function signup() {
             return;
         }
 
-        showAuthMessage("Account created successfully!", true);
+        showAuthMessage(
+            "Account created successfully!",
+            true
+        );
 
         signupUsername.value = "";
         signupPassword.value = "";
@@ -136,7 +154,9 @@ async function signup() {
 
     } catch (error) {
         console.error(error);
-        showAuthMessage("Unable to connect to NEXORA.");
+        showAuthMessage(
+            "Unable to connect to NEXORA."
+        );
     } finally {
         signupButton.disabled = false;
         signupButton.textContent = "Create Account";
@@ -154,7 +174,9 @@ async function login() {
     const password = loginPassword.value;
 
     if (!username || !password) {
-        showAuthMessage("Enter your username and password.");
+        showAuthMessage(
+            "Enter your username and password."
+        );
         return;
     }
 
@@ -168,19 +190,24 @@ async function login() {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                username: username,
-                password: password
+                username,
+                password
             })
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-            showAuthMessage(data.error || "Login failed.");
+            showAuthMessage(
+                data.error || "Login failed."
+            );
             return;
         }
 
-        localStorage.setItem("nexora_user", data.username);
+        localStorage.setItem(
+            "nexora_user",
+            data.username
+        );
 
         loginUsername.value = "";
         loginPassword.value = "";
@@ -189,7 +216,11 @@ async function login() {
 
     } catch (error) {
         console.error(error);
-        showAuthMessage("Unable to connect to NEXORA.");
+
+        showAuthMessage(
+            "Unable to connect to NEXORA."
+        );
+
     } finally {
         loginButton.disabled = false;
         loginButton.textContent = "Login";
@@ -212,6 +243,7 @@ function checkLogin() {
     const username = getCurrentUser();
 
     if (username) {
+
         authScreen.classList.add("hidden");
         app.classList.remove("hidden");
 
@@ -219,9 +251,12 @@ function checkLogin() {
 
         loadProfile();
         loadHistory();
+
     } else {
+
         authScreen.classList.remove("hidden");
         app.classList.add("hidden");
+
     }
 }
 
@@ -244,6 +279,7 @@ async function loadProfile() {
     if (!username) return;
 
     try {
+
         const response = await fetch(
             `${API_URL}/profile?username=${encodeURIComponent(username)}`
         );
@@ -251,14 +287,21 @@ async function loadProfile() {
         const data = await response.json();
 
         if (response.ok) {
-            profileUsername.textContent = data.username || username;
+
+            profileUsername.textContent =
+                data.username || username;
 
             conversationCount.textContent =
                 data.conversation_count ?? 0;
         }
 
     } catch (error) {
-        console.error("Profile error:", error);
+
+        console.error(
+            "Profile error:",
+            error
+        );
+
     }
 }
 
@@ -267,6 +310,10 @@ async function loadProfile() {
 // ===============================
 
 logoutButton.addEventListener("click", () => {
+
+    stopListening();
+    stopSpeaking();
+
     localStorage.removeItem("nexora_user");
 
     chatBox.innerHTML = `
@@ -287,15 +334,18 @@ logoutButton.addEventListener("click", () => {
 // ===============================
 
 function addMessage(text, sender) {
+
     const message = document.createElement("div");
 
-    message.className = `message ${sender}`;
+    message.className =
+        `message ${sender}`;
 
     message.textContent = text;
 
     chatBox.appendChild(message);
 
-    chatBox.scrollTop = chatBox.scrollHeight;
+    chatBox.scrollTop =
+        chatBox.scrollHeight;
 
     return message;
 }
@@ -304,39 +354,63 @@ function addMessage(text, sender) {
 // ADD IMAGE MESSAGE
 // ===============================
 
-function addImageMessage(imageUrl, prompt = "") {
-    const message = document.createElement("div");
+function addImageMessage(
+    imageUrl,
+    prompt = ""
+) {
 
-    message.className = "message ai image-message";
+    const message =
+        document.createElement("div");
 
-    const image = document.createElement("img");
+    message.className =
+        "message ai image-message";
 
-    image.className = "generated-image";
+    const image =
+        document.createElement("img");
+
+    image.className =
+        "generated-image";
 
     image.src = imageUrl;
 
-    image.alt = prompt || "Generated image by NEXORA AI";
+    image.alt =
+        prompt ||
+        "Generated image by NEXORA AI";
 
     image.loading = "lazy";
 
-    image.addEventListener("load", () => {
-        chatBox.scrollTop = chatBox.scrollHeight;
-    });
+    image.addEventListener(
+        "load",
+        () => {
+            chatBox.scrollTop =
+                chatBox.scrollHeight;
+        }
+    );
 
-    image.addEventListener("error", () => {
-        image.remove();
+    image.addEventListener(
+        "error",
+        () => {
 
-        const errorText = document.createElement("p");
-        errorText.textContent = "NEXORA generated an image, but it could not be displayed.";
+            image.remove();
 
-        message.appendChild(errorText);
-    });
+            const errorText =
+                document.createElement("p");
+
+            errorText.textContent =
+                "NEXORA generated an image, but it could not be displayed.";
+
+            message.appendChild(
+                errorText
+            );
+        }
+    );
 
     message.appendChild(image);
 
     chatBox.appendChild(message);
 
-    chatBox.scrollTop = chatBox.scrollHeight;
+    chatBox.scrollTop =
+        chatBox.scrollHeight;
 
     return message;
 }
@@ -345,15 +419,285 @@ function addImageMessage(imageUrl, prompt = "") {
 // TYPE AI MESSAGE
 // ===============================
 
-async function typeMessage(element, text) {
+async function typeMessage(
+    element,
+    text
+) {
+
     element.textContent = "";
 
-    for (let i = 0; i < text.length; i++) {
-        element.textContent += text[i];
+    for (
+        let i = 0;
+        i < text.length;
+        i++
+    ) {
 
-        chatBox.scrollTop = chatBox.scrollHeight;
+        element.textContent +=
+            text[i];
 
-        await new Promise(resolve => setTimeout(resolve, 8));
+        chatBox.scrollTop =
+            chatBox.scrollHeight;
+
+        await new Promise(
+            resolve =>
+                setTimeout(resolve, 8)
+        );
+    }
+}
+
+// ===============================
+// VOICE INPUT SETUP
+// ===============================
+
+function setupVoiceInput() {
+
+    if (!SpeechRecognition) {
+
+        voiceButton.disabled = true;
+
+        voiceButton.title =
+            "Voice input is not supported in this browser.";
+
+        voiceStatus.textContent =
+            "Voice input is not supported in this browser.";
+
+        return;
+    }
+
+    speechRecognition =
+        new SpeechRecognition();
+
+    speechRecognition.continuous = false;
+
+    speechRecognition.interimResults = true;
+
+    speechRecognition.lang = "en-US";
+
+    speechRecognition.onstart = () => {
+
+        isListening = true;
+
+        voiceButton.textContent =
+            "⏹️";
+
+        voiceButton.classList.add(
+            "listening"
+        );
+
+        voiceStatus.textContent =
+            "Listening... speak now";
+
+    };
+
+    speechRecognition.onresult =
+        (event) => {
+
+            let finalText = "";
+
+            for (
+                let i =
+                    event.resultIndex;
+                i < event.results.length;
+                i++
+            ) {
+
+                finalText +=
+                    event.results[i][0].transcript;
+            }
+
+            messageInput.value =
+                finalText.trim();
+        };
+
+    speechRecognition.onerror =
+        (event) => {
+
+            console.error(
+                "Speech recognition error:",
+                event.error
+            );
+
+            if (
+                event.error ===
+                "not-allowed"
+            ) {
+
+                voiceStatus.textContent =
+                    "Microphone permission was denied.";
+
+            } else {
+
+                voiceStatus.textContent =
+                    "I couldn't hear that. Try again.";
+
+            }
+
+            stopListening();
+        };
+
+    speechRecognition.onend = () => {
+
+        isListening = false;
+
+        voiceButton.textContent =
+            "🎙️";
+
+        voiceButton.classList.remove(
+            "listening"
+        );
+
+        setTimeout(() => {
+
+            if (!isListening) {
+                voiceStatus.textContent = "";
+            }
+
+        }, 1500);
+
+        const spokenText =
+            messageInput.value.trim();
+
+        if (spokenText) {
+
+            sendMessage();
+        }
+    };
+}
+
+// ===============================
+// START / STOP LISTENING
+// ===============================
+
+voiceButton.addEventListener(
+    "click",
+    () => {
+
+        if (!speechRecognition) {
+            setupVoiceInput();
+        }
+
+        if (isListening) {
+
+            stopListening();
+
+        } else {
+
+            startListening();
+
+        }
+    }
+);
+
+function startListening() {
+
+    if (!speechRecognition) return;
+
+    try {
+
+        speechRecognition.start();
+
+    } catch (error) {
+
+        console.error(
+            "Could not start microphone:",
+            error
+        );
+
+    }
+}
+
+function stopListening() {
+
+    if (
+        speechRecognition &&
+        isListening
+    ) {
+
+        try {
+
+            speechRecognition.stop();
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+    }
+
+    isListening = false;
+
+    voiceButton.textContent =
+        "🎙️";
+
+    voiceButton.classList.remove(
+        "listening"
+    );
+}
+
+// ===============================
+// VOICE REPLIES
+// ===============================
+
+function speakReply(text) {
+
+    if (!speechSynthesisSupported) {
+        return;
+    }
+
+    if (!text || !text.trim()) {
+        return;
+    }
+
+    stopSpeaking();
+
+    const cleanText =
+        text
+            .replace(/[*_#`]/g, "")
+            .replace(/\n+/g, " ")
+            .trim();
+
+    const utterance =
+        new SpeechSynthesisUtterance(
+            cleanText
+        );
+
+    utterance.lang = "en-US";
+
+    utterance.rate = 1.0;
+
+    utterance.pitch = 1.0;
+
+    utterance.volume = 1.0;
+
+    const voices =
+        window.speechSynthesis.getVoices();
+
+    const preferredVoice =
+        voices.find(
+            voice =>
+                voice.lang === "en-US"
+        ) ||
+        voices.find(
+            voice =>
+                voice.lang.startsWith("en")
+        );
+
+    if (preferredVoice) {
+        utterance.voice =
+            preferredVoice;
+    }
+
+    window.speechSynthesis.speak(
+        utterance
+    );
+}
+
+function stopSpeaking() {
+
+    if (speechSynthesisSupported) {
+
+        window.speechSynthesis.cancel();
+
     }
 }
 
@@ -361,53 +705,94 @@ async function typeMessage(element, text) {
 // SEND MESSAGE
 // ===============================
 
-sendButton.addEventListener("click", sendMessage);
+sendButton.addEventListener(
+    "click",
+    sendMessage
+);
 
-messageInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-        event.preventDefault();
-        sendMessage();
+messageInput.addEventListener(
+    "keydown",
+    (event) => {
+
+        if (event.key === "Enter") {
+
+            event.preventDefault();
+
+            sendMessage();
+
+        }
     }
-});
+);
 
 async function sendMessage() {
-    const message = messageInput.value.trim();
-    const username = getCurrentUser();
 
-    if (!message || !username) return;
+    const message =
+        messageInput.value.trim();
 
-    // Show user message
-    addMessage(message, "user");
+    const username =
+        getCurrentUser();
+
+    if (!message || !username) {
+        return;
+    }
+
+    stopListening();
+
+    addMessage(
+        message,
+        "user"
+    );
 
     messageInput.value = "";
 
     sendButton.disabled = true;
     messageInput.disabled = true;
+    voiceButton.disabled = true;
 
-    // Thinking message
-    const thinkingMessage = addMessage("NEXORA is thinking...", "ai");
+    const thinkingMessage =
+        addMessage(
+            "NEXORA is thinking...",
+            "ai"
+        );
 
     try {
-        const response = await fetch(`${API_URL}/chat`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                username: username,
-                message: message
-            })
-        });
 
-        const data = await response.json();
+        const response =
+            await fetch(
+                `${API_URL}/chat`,
+                {
+                    method: "POST",
 
-        // Remove thinking message
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        username,
+                        message
+                    })
+                }
+            );
+
+        const data =
+            await response.json();
+
         thinkingMessage.remove();
 
         if (!response.ok) {
+
+            const errorMessage =
+                data.error ||
+                "Something went wrong.";
+
             addMessage(
-                data.error || "Something went wrong.",
+                errorMessage,
                 "ai"
+            );
+
+            speakReply(
+                errorMessage
             );
 
             return;
@@ -417,20 +802,33 @@ async function sendMessage() {
         // IMAGE RESPONSE
         // =========================
 
-        if (data.image_generated && data.image_url) {
+        if (
+            data.image_generated &&
+            data.image_url
+        ) {
 
             if (data.reply) {
-                const replyMessage = addMessage("", "ai");
+
+                const replyMessage =
+                    addMessage(
+                        "",
+                        "ai"
+                    );
 
                 await typeMessage(
                     replyMessage,
+                    data.reply
+                );
+
+                speakReply(
                     data.reply
                 );
             }
 
             addImageMessage(
                 data.image_url,
-                data.image_prompt || message
+                data.image_prompt ||
+                    message
             );
 
         } else {
@@ -439,29 +837,57 @@ async function sendMessage() {
             // NORMAL TEXT RESPONSE
             // =========================
 
-            const aiMessage = addMessage("", "ai");
+            const aiMessage =
+                addMessage(
+                    "",
+                    "ai"
+                );
+
+            const reply =
+                data.reply ||
+                "I couldn't generate a response.";
 
             await typeMessage(
                 aiMessage,
-                data.reply || "I couldn't generate a response."
+                reply
             );
+
+            // 🔊 SPEAK RESPONSE
+
+            speakReply(reply);
         }
 
         loadProfile();
 
     } catch (error) {
-        console.error("Chat error:", error);
+
+        console.error(
+            "Chat error:",
+            error
+        );
 
         thinkingMessage.remove();
 
+        const errorMessage =
+            "I couldn't connect to NEXORA's server.";
+
         addMessage(
-            "I couldn't connect to NEXORA's server.",
+            errorMessage,
             "ai"
         );
 
+        speakReply(
+            errorMessage
+        );
+
     } finally {
+
         sendButton.disabled = false;
+
         messageInput.disabled = false;
+
+        voiceButton.disabled =
+            !SpeechRecognition;
 
         messageInput.focus();
     }
@@ -471,29 +897,47 @@ async function sendMessage() {
 // CLEAR CHAT
 // ===============================
 
-clearButton.addEventListener("click", clearChat);
+clearButton.addEventListener(
+    "click",
+    clearChat
+);
 
 async function clearChat() {
-    const username = getCurrentUser();
+
+    const username =
+        getCurrentUser();
 
     if (!username) return;
 
-    try {
-        const response = await fetch(`${API_URL}/clear`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                username: username
-            })
-        });
+    stopSpeaking();
 
-        const data = await response.json();
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/clear`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        username
+                    })
+                }
+            );
+
+        const data =
+            await response.json();
 
         if (!response.ok) {
+
             addMessage(
-                data.error || "Unable to clear conversation.",
+                data.error ||
+                    "Unable to clear conversation.",
                 "ai"
             );
 
@@ -511,7 +955,11 @@ async function clearChat() {
         loadProfile();
 
     } catch (error) {
-        console.error("Clear error:", error);
+
+        console.error(
+            "Clear error:",
+            error
+        );
 
         addMessage(
             "Unable to connect to NEXORA.",
@@ -525,18 +973,26 @@ async function clearChat() {
 // ===============================
 
 async function loadHistory() {
-    const username = getCurrentUser();
+
+    const username =
+        getCurrentUser();
 
     if (!username) return;
 
     try {
-        const response = await fetch(
-            `${API_URL}/history?username=${encodeURIComponent(username)}`
-        );
 
-        const data = await response.json();
+        const response =
+            await fetch(
+                `${API_URL}/history?username=${encodeURIComponent(username)}`
+            );
 
-        if (!response.ok || !Array.isArray(data.history)) {
+        const data =
+            await response.json();
+
+        if (
+            !response.ok ||
+            !Array.isArray(data.history)
+        ) {
             return;
         }
 
@@ -546,19 +1002,33 @@ async function loadHistory() {
 
         chatBox.innerHTML = "";
 
-        for (const item of data.history) {
+        for (
+            const item of data.history
+        ) {
 
             if (item.user) {
-                addMessage(item.user, "user");
+
+                addMessage(
+                    item.user,
+                    "user"
+                );
             }
 
             if (item.assistant) {
-                addMessage(item.assistant, "ai");
+
+                addMessage(
+                    item.assistant,
+                    "ai"
+                );
             }
         }
 
     } catch (error) {
-        console.error("History error:", error);
+
+        console.error(
+            "History error:",
+            error
+        );
     }
 }
 
@@ -566,4 +1036,15 @@ async function loadHistory() {
 // START APP
 // ===============================
 
+setupVoiceInput();
+
 checkLogin();
+
+// Load available voices
+if (speechSynthesisSupported) {
+
+    window.speechSynthesis.onvoiceschanged =
+        () => {
+            window.speechSynthesis.getVoices();
+        };
+}
