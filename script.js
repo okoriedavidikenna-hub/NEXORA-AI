@@ -19,8 +19,8 @@ const signupPassword = document.getElementById("signupPassword");
 const loginMessage = document.getElementById("loginMessage");
 const signupMessage = document.getElementById("signupMessage");
 
-const showSignup = document.getElementById("showSignup");
-const showLogin = document.getElementById("showLogin");
+const showSignup = document.getElementById("showSignupButton");
+const showLogin = document.getElementById("showLoginButton");
 
 
 // ===============================
