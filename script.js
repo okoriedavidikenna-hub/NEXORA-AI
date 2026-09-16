@@ -4,54 +4,92 @@ const API_URL = "https://nexora-ai-9jgj.onrender.com";
 // AUTH ELEMENTS
 // ===============================
 
-const authScreen = document.getElementById("authScreen");
-const appScreen = document.getElementById("appScreen");
+const authScreen =
+    document.getElementById("authScreen");
 
-const loginForm = document.getElementById("loginForm");
-const signupForm = document.getElementById("signupForm");
+const appScreen =
+    document.getElementById("appScreen");
 
-const loginUsername = document.getElementById("loginUsername");
-const loginPassword = document.getElementById("loginPassword");
+const loginForm =
+    document.getElementById("loginForm");
 
-const signupUsername = document.getElementById("signupUsername");
-const signupPassword = document.getElementById("signupPassword");
+const signupForm =
+    document.getElementById("signupForm");
 
-const loginMessage = document.getElementById("loginMessage");
-const signupMessage = document.getElementById("signupMessage");
+const loginUsername =
+    document.getElementById("loginUsername");
 
-const showSignup = document.getElementById("showSignup");
-const showLogin = document.getElementById("showLogin");
+const loginPassword =
+    document.getElementById("loginPassword");
+
+const signupUsername =
+    document.getElementById("signupUsername");
+
+const signupPassword =
+    document.getElementById("signupPassword");
+
+const loginMessage =
+    document.getElementById("loginMessage");
+
+const signupMessage =
+    document.getElementById("signupMessage");
+
+// IMPORTANT:
+// These IDs match index.html
+const showSignup =
+    document.getElementById("showSignupButton");
+
+const showLogin =
+    document.getElementById("showLoginButton");
 
 
 // ===============================
 // APP ELEMENTS
 // ===============================
 
-const messageInput = document.getElementById("messageInput");
-const sendButton = document.getElementById("sendButton");
-const chatBox = document.getElementById("chatBox");
+const messageInput =
+    document.getElementById("messageInput");
 
-const clearButton = document.getElementById("clearButton");
-const profileButton = document.getElementById("profileButton");
+const sendButton =
+    document.getElementById("sendButton");
 
-const profilePanel = document.getElementById("profilePanel");
-const profileUsername = document.getElementById("profileUsername");
-const profileCount = document.getElementById("profileCount");
+const chatBox =
+    document.getElementById("chatBox");
 
-const logoutButton = document.getElementById("logoutButton");
+const clearButton =
+    document.getElementById("clearButton");
+
+const profileButton =
+    document.getElementById("profileButton");
+
+const profilePanel =
+    document.getElementById("profilePanel");
+
+const profileUsername =
+    document.getElementById("profileUsername");
+
+const profileCount =
+    document.getElementById("profileCount");
+
+const logoutButton =
+    document.getElementById("logoutButton");
 
 
 // ===============================
 // VOICE ELEMENTS
 // ===============================
 
-const voiceButton = document.getElementById("voiceButton");
-const voiceStatus = document.getElementById("voiceStatus");
+const voiceButton =
+    document.getElementById("voiceButton");
+
+const voiceStatus =
+    document.getElementById("voiceStatus");
 
 const voiceReplyToggle =
     document.getElementById("voiceReplyToggle");
 
 let speechRecognition = null;
+
 let isListening = false;
 
 const SpeechRecognition =
@@ -74,170 +112,40 @@ let currentUser =
 // STARTUP
 // ===============================
 
-if (currentUser) {
-    showApp();
-}
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
+        setupVoiceInput();
+        setupVoiceReplyToggle();
 
-// ===============================
-// AUTH SWITCHING
-// ===============================
-
-showSignup?.addEventListener("click", () => {
-    loginForm.style.display = "none";
-    signupForm.style.display = "block";
-
-    loginMessage.textContent = "";
-    signupMessage.textContent = "";
-});
-
-showLogin?.addEventListener("click", () => {
-    signupForm.style.display = "none";
-    loginForm.style.display = "block";
-
-    signupMessage.textContent = "";
-    loginMessage.textContent = "";
-});
-
-
-// ===============================
-// SIGNUP
-// ===============================
-
-signupForm?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const username =
-        signupUsername.value.trim();
-
-    const password =
-        signupPassword.value.trim();
-
-    if (!username || !password) {
-        signupMessage.textContent =
-            "Please enter a username and password.";
-        return;
-    }
-
-    signupMessage.textContent =
-        "Creating account...";
-
-    try {
-        const response =
-            await fetch(`${API_URL}/signup`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    username,
-                    password
-                })
-            });
-
-        const data =
-            await response.json();
-
-        if (!response.ok) {
-            signupMessage.textContent =
-                data.error ||
-                "Signup failed.";
-            return;
-        }
-
-        signupMessage.textContent =
-            "Account created successfully!";
-
-        signupUsername.value = "";
-        signupPassword.value = "";
-
-        setTimeout(() => {
-            signupForm.style.display = "none";
-            loginForm.style.display = "block";
-
-            loginUsername.value =
-                username;
-
-            loginMessage.textContent =
-                "You can now log in.";
-        }, 700);
-
-    } catch (error) {
-        console.error(error);
-
-        signupMessage.textContent =
-            "Could not connect to NEXORA.";
-    }
-});
-
-
-// ===============================
-// LOGIN
-// ===============================
-
-loginForm?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const username =
-        loginUsername.value.trim();
-
-    const password =
-        loginPassword.value.trim();
-
-    if (!username || !password) {
-        loginMessage.textContent =
-            "Please enter your username and password.";
-        return;
-    }
-
-    loginMessage.textContent =
-        "Logging in...";
-
-    try {
-        const response =
-            await fetch(`${API_URL}/login`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    username,
-                    password
-                })
-            });
-
-        const data =
-            await response.json();
-
-        if (!response.ok) {
-            loginMessage.textContent =
-                data.error ||
-                "Login failed.";
-            return;
-        }
-
-        currentUser =
-            data.username || username;
-
-        localStorage.setItem(
-            "nexora_username",
-            currentUser
-        );
-
-        loginMessage.textContent =
-            "Login successful.";
-
-        setTimeout(() => {
+        if (currentUser) {
             showApp();
-        }, 400);
+        } else {
+            showAuth();
+        }
 
-    } catch (error) {
-        console.error(error);
-
-        loginMessage.textContent =
-            "Could not connect to NEXORA.";
     }
-});
+);
+
+
+// ===============================
+// SHOW AUTH
+// ===============================
+
+function showAuth() {
+
+    if (authScreen) {
+        authScreen.classList.remove("hidden");
+        authScreen.style.display = "block";
+    }
+
+    if (appScreen) {
+        appScreen.classList.add("hidden");
+        appScreen.style.display = "none";
+    }
+
+}
 
 
 // ===============================
@@ -245,106 +153,337 @@ loginForm?.addEventListener("submit", async (event) => {
 // ===============================
 
 function showApp() {
+
     if (authScreen) {
+        authScreen.classList.add("hidden");
         authScreen.style.display = "none";
     }
 
     if (appScreen) {
+        appScreen.classList.remove("hidden");
         appScreen.style.display = "flex";
     }
 
-    if (profileUsername) {
-        profileUsername.textContent =
-            currentUser || "User";
-    }
-
-    setupVoiceInput();
     loadHistory();
     loadProfile();
+
 }
 
 
 // ===============================
-// PROFILE
+// AUTH SWITCHING
 // ===============================
 
-profileButton?.addEventListener("click", () => {
-    if (!profilePanel) return;
+showSignup?.addEventListener(
+    "click",
+    () => {
 
-    const visible =
-        profilePanel.style.display === "block";
+        if (loginForm) {
+            loginForm.style.display = "none";
+        }
 
-    profilePanel.style.display =
-        visible ? "none" : "block";
+        if (signupForm) {
+            signupForm.style.display = "block";
+        }
 
-    if (!visible) {
-        loadProfile();
+        if (loginMessage) {
+            loginMessage.textContent = "";
+        }
+
+        if (signupMessage) {
+            signupMessage.textContent = "";
+        }
+
     }
-});
+);
 
-async function loadProfile() {
-    if (!currentUser) return;
 
-    try {
-        const response =
-            await fetch(
-                `${API_URL}/profile?username=${encodeURIComponent(currentUser)}`
+showLogin?.addEventListener(
+    "click",
+    () => {
+
+        if (signupForm) {
+            signupForm.style.display = "none";
+        }
+
+        if (loginForm) {
+            loginForm.style.display = "block";
+        }
+
+        if (signupMessage) {
+            signupMessage.textContent = "";
+        }
+
+        if (loginMessage) {
+            loginMessage.textContent = "";
+        }
+
+    }
+);
+
+
+// ===============================
+// SIGNUP
+// ===============================
+
+signupForm?.addEventListener(
+    "submit",
+    async (event) => {
+
+        event.preventDefault();
+
+        const username =
+            signupUsername.value.trim();
+
+        const password =
+            signupPassword.value.trim();
+
+        if (!username || !password) {
+
+            signupMessage.textContent =
+                "Please enter a username and password.";
+
+            return;
+        }
+
+        signupMessage.textContent =
+            "Creating account...";
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_URL}/signup`,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            username,
+                            password
+                        })
+                    }
+                );
+
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+
+                signupMessage.textContent =
+                    data.error ||
+                    "Signup failed.";
+
+                return;
+            }
+
+            signupMessage.textContent =
+                "Account created successfully!";
+
+            signupUsername.value = "";
+            signupPassword.value = "";
+
+            setTimeout(
+                () => {
+
+                    if (signupForm) {
+                        signupForm.style.display =
+                            "none";
+                    }
+
+                    if (loginForm) {
+                        loginForm.style.display =
+                            "block";
+                    }
+
+                    if (loginUsername) {
+                        loginUsername.value =
+                            username;
+                    }
+
+                    if (loginMessage) {
+                        loginMessage.textContent =
+                            "You can now log in.";
+                    }
+
+                },
+                700
             );
 
-        const data =
-            await response.json();
+        } catch (error) {
 
-        if (profileUsername) {
-            profileUsername.textContent =
-                currentUser;
+            console.error(
+                "Signup error:",
+                error
+            );
+
+            signupMessage.textContent =
+                "Could not connect to NEXORA.";
+
         }
 
-        if (profileCount) {
-            profileCount.textContent =
-                data.conversation_count ?? 0;
-        }
-
-    } catch (error) {
-        console.error(
-            "Profile error:",
-            error
-        );
     }
-}
+);
 
 
 // ===============================
-// LOGOUT
+// LOGIN
 // ===============================
 
-logoutButton?.addEventListener("click", () => {
-    stopSpeaking();
-    stopListening();
+loginForm?.addEventListener(
+    "submit",
+    async (event) => {
 
-    localStorage.removeItem(
-        "nexora_username"
-    );
+        event.preventDefault();
 
-    currentUser = null;
+        const username =
+            loginUsername.value.trim();
 
-    location.reload();
-});
+        const password =
+            loginPassword.value.trim();
+
+        if (!username || !password) {
+
+            loginMessage.textContent =
+                "Please enter your username and password.";
+
+            return;
+        }
+
+        loginMessage.textContent =
+            "Logging in...";
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_URL}/login`,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            username,
+                            password
+                        })
+                    }
+                );
+
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+
+                loginMessage.textContent =
+                    data.error ||
+                    "Login failed.";
+
+                return;
+            }
+
+            currentUser =
+                data.username ||
+                username;
+
+            localStorage.setItem(
+                "nexora_username",
+                currentUser
+            );
+
+            loginMessage.textContent =
+                "Login successful.";
+
+            setTimeout(
+                () => {
+                    showApp();
+                },
+                400
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Login error:",
+                error
+            );
+
+            loginMessage.textContent =
+                "Could not connect to NEXORA.";
+
+        }
+
+    }
+);
 
 
 // ===============================
 // ADD MESSAGE
 // ===============================
 
-function addMessage(text, sender) {
+function addMessage(
+    text,
+    sender = "ai",
+    imageUrl = null
+) {
+
+    if (!chatBox) {
+        return null;
+    }
+
     const message =
         document.createElement("div");
 
     message.className =
         `message ${sender}`;
 
-    message.textContent = text;
+    if (text) {
 
-    chatBox.appendChild(message);
+        const textElement =
+            document.createElement("div");
+
+        textElement.className =
+            "message-text";
+
+        textElement.textContent =
+            text;
+
+        message.appendChild(
+            textElement
+        );
+    }
+
+    if (imageUrl) {
+
+        const image =
+            document.createElement("img");
+
+        image.src = imageUrl;
+
+        image.alt =
+            "Generated image";
+
+        image.className =
+            "generated-image";
+
+        image.loading =
+            "lazy";
+
+        message.appendChild(
+            image
+        );
+    }
+
+    chatBox.appendChild(
+        message
+    );
 
     chatBox.scrollTop =
         chatBox.scrollHeight;
@@ -354,65 +493,54 @@ function addMessage(text, sender) {
 
 
 // ===============================
-// ADD GENERATED IMAGE
-// ===============================
-
-function addImageMessage(imageUrl, prompt) {
-    const wrapper =
-        document.createElement("div");
-
-    wrapper.className =
-        "message ai image-message";
-
-    const image =
-        document.createElement("img");
-
-    image.className =
-        "generated-image";
-
-    image.src = imageUrl;
-
-    image.alt =
-        prompt || "Generated image";
-
-    image.loading = "lazy";
-
-    wrapper.appendChild(image);
-
-    chatBox.appendChild(wrapper);
-
-    chatBox.scrollTop =
-        chatBox.scrollHeight;
-}
-
-
-// ===============================
 // TYPE MESSAGE
 // ===============================
 
-async function typeMessage(
+function typeMessage(
     element,
-    text
+    text,
+    speed = 12
 ) {
-    if (!element) return;
 
-    element.textContent = "";
+    return new Promise(
+        (resolve) => {
 
-    const words =
-        text.split(" ");
+            if (!element) {
+                resolve();
+                return;
+            }
 
-    for (let i = 0; i < words.length; i++) {
-        element.textContent +=
-            (i === 0 ? "" : " ") +
-            words[i];
+            element.textContent = "";
 
-        chatBox.scrollTop =
-            chatBox.scrollHeight;
+            let index = 0;
 
-        await new Promise(resolve =>
-            setTimeout(resolve, 18)
-        );
-    }
+            function typeNext() {
+
+                if (index >= text.length) {
+                    resolve();
+                    return;
+                }
+
+                element.textContent +=
+                    text.charAt(index);
+
+                index++;
+
+                if (chatBox) {
+                    chatBox.scrollTop =
+                        chatBox.scrollHeight;
+                }
+
+                setTimeout(
+                    typeNext,
+                    speed
+                );
+            }
+
+            typeNext();
+
+        }
+    );
 }
 
 
@@ -421,16 +549,22 @@ async function typeMessage(
 // ===============================
 
 async function sendMessage() {
+
+    if (!messageInput) {
+        return;
+    }
+
     const message =
         messageInput.value.trim();
 
-    if (!message) return;
+    if (!message) {
+        return;
+    }
 
     if (!currentUser) {
-        addMessage(
-            "Please log in first.",
-            "ai"
-        );
+
+        showAuth();
+
         return;
     }
 
@@ -441,33 +575,48 @@ async function sendMessage() {
 
     messageInput.value = "";
 
-    sendButton.disabled = true;
+    if (sendButton) {
+        sendButton.disabled = true;
+    }
 
     const thinkingMessage =
         addMessage(
-            "Thinking...",
+            "NEXORA is thinking...",
             "ai"
         );
 
     try {
+
         const response =
-            await fetch(`${API_URL}/chat`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    username: currentUser,
-                    message: message
-                })
-            });
+            await fetch(
+                `${API_URL}/chat`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        username:
+                            currentUser,
+
+                        message:
+                            message
+                    })
+                }
+            );
 
         const data =
             await response.json();
 
-        thinkingMessage.remove();
+        if (thinkingMessage) {
+            thinkingMessage.remove();
+        }
 
         if (!response.ok) {
+
             addMessage(
                 data.error ||
                 "Something went wrong.",
@@ -477,43 +626,109 @@ async function sendMessage() {
             return;
         }
 
+        const aiMessage =
+            addMessage(
+                "",
+                "ai"
+            );
+
+        const textElement =
+            aiMessage?.querySelector(
+                ".message-text"
+            );
+
         if (data.reply) {
-            const replyMessage =
-                addMessage(
-                    "",
-                    "ai"
-                );
 
             await typeMessage(
-                replyMessage,
+                textElement,
                 data.reply
             );
 
-            speakReply(data.reply);
-        }
-
-        if (data.image_url) {
-            addImageMessage(
-                data.image_url,
-                data.image_prompt || message
+            speakReply(
+                data.reply
             );
         }
 
-    } catch (error) {
-        console.error(error);
+        if (
+            data.image_generated &&
+            data.image_url
+        ) {
 
-        thinkingMessage.remove();
+            const image =
+                document.createElement(
+                    "img"
+                );
+
+            image.src =
+                data.image_url;
+
+            image.alt =
+                data.image_prompt ||
+                "Generated image";
+
+            image.className =
+                "generated-image";
+
+            image.loading =
+                "lazy";
+
+            aiMessage.appendChild(
+                image
+            );
+
+            if (chatBox) {
+                chatBox.scrollTop =
+                    chatBox.scrollHeight;
+            }
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Chat error:",
+            error
+        );
+
+        if (thinkingMessage) {
+            thinkingMessage.remove();
+        }
 
         addMessage(
-            "I couldn't connect to the NEXORA server.",
+            "Could not connect to NEXORA.",
             "ai"
         );
 
     } finally {
-        sendButton.disabled = false;
+
+        if (sendButton) {
+            sendButton.disabled = false;
+        }
+
         messageInput.focus();
     }
 }
+
+
+// ===============================
+// ENTER TO SEND
+// ===============================
+
+messageInput?.addEventListener(
+    "keydown",
+    (event) => {
+
+        if (
+            event.key === "Enter" &&
+            !event.shiftKey
+        ) {
+
+            event.preventDefault();
+
+            sendMessage();
+        }
+
+    }
+);
 
 
 // ===============================
@@ -527,42 +742,30 @@ sendButton?.addEventListener(
 
 
 // ===============================
-// ENTER TO SEND
-// ===============================
-
-messageInput?.addEventListener(
-    "keydown",
-    (event) => {
-        if (
-            event.key === "Enter" &&
-            !event.shiftKey
-        ) {
-            event.preventDefault();
-            sendMessage();
-        }
-    }
-);
-
-
-// ===============================
 // CLEAR CHAT
 // ===============================
 
 clearButton?.addEventListener(
     "click",
     async () => {
-        if (!currentUser) return;
+
+        if (!currentUser) {
+            return;
+        }
 
         try {
+
             const response =
                 await fetch(
                     `${API_URL}/clear`,
                     {
                         method: "POST",
+
                         headers: {
                             "Content-Type":
                                 "application/json"
                         },
+
                         body: JSON.stringify({
                             username:
                                 currentUser
@@ -570,29 +773,39 @@ clearButton?.addEventListener(
                     }
                 );
 
-            if (!response.ok) {
-                throw new Error(
-                    "Clear failed"
+            const data =
+                await response.json();
+
+            if (response.ok) {
+
+                if (chatBox) {
+                    chatBox.innerHTML = "";
+                }
+
+                addMessage(
+                    "Chat cleared. How can I help you?",
+                    "ai"
+                );
+
+                loadProfile();
+            } else {
+
+                addMessage(
+                    data.error ||
+                    "Could not clear chat.",
+                    "ai"
                 );
             }
 
-            chatBox.innerHTML = "";
-
-            addMessage(
-                "Chat cleared. How can I help you?",
-                "ai"
-            );
-
-            stopSpeaking();
-
         } catch (error) {
-            console.error(error);
 
-            addMessage(
-                "I couldn't clear the chat.",
-                "ai"
+            console.error(
+                "Clear chat error:",
+                error
             );
+
         }
+
     }
 );
 
@@ -602,9 +815,13 @@ clearButton?.addEventListener(
 // ===============================
 
 async function loadHistory() {
-    if (!currentUser) return;
+
+    if (!currentUser || !chatBox) {
+        return;
+    }
 
     try {
+
         const response =
             await fetch(
                 `${API_URL}/history?username=${encodeURIComponent(currentUser)}`
@@ -613,56 +830,192 @@ async function loadHistory() {
         const data =
             await response.json();
 
-        if (
-            !response.ok ||
-            !Array.isArray(data.history)
-        ) {
+        if (!response.ok) {
             return;
         }
 
         chatBox.innerHTML = "";
 
-        if (data.history.length === 0) {
+        const history =
+            data.history ||
+            data.conversation_history ||
+            [];
+
+        if (!history.length) {
+
             addMessage(
-                `Welcome back, ${currentUser}! I'm NEXORA. How can I help you?`,
+                `Hello ${currentUser}! I'm NEXORA. How can I help you today?`,
                 "ai"
             );
 
             return;
         }
 
-        for (const item of data.history) {
-            if (
-                item.user &&
-                item.user.trim()
-            ) {
-                addMessage(
-                    item.user,
-                    "user"
-                );
-            }
+        history.forEach(
+            (item) => {
 
-            if (
-                item.assistant &&
-                item.assistant.trim()
-            ) {
-                addMessage(
-                    item.assistant,
-                    "ai"
-                );
-            }
-        }
+                const userText =
+                    item.user ||
+                    item.question ||
+                    item.message;
 
-        chatBox.scrollTop =
-            chatBox.scrollHeight;
+                const aiText =
+                    item.assistant ||
+                    item.answer ||
+                    item.reply;
+
+                if (userText) {
+
+                    addMessage(
+                        userText,
+                        "user"
+                    );
+                }
+
+                if (aiText) {
+
+                    addMessage(
+                        aiText,
+                        "ai"
+                    );
+                }
+
+            }
+        );
 
     } catch (error) {
+
         console.error(
             "History error:",
             error
         );
+
     }
+
 }
+
+
+// ===============================
+// LOAD PROFILE
+// ===============================
+
+async function loadProfile() {
+
+    if (!currentUser) {
+        return;
+    }
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/profile?username=${encodeURIComponent(currentUser)}`
+            );
+
+        const data =
+            await response.json();
+
+        if (!response.ok) {
+            return;
+        }
+
+        if (profileUsername) {
+
+            profileUsername.textContent =
+                data.username ||
+                currentUser;
+        }
+
+        if (profileCount) {
+
+            profileCount.textContent =
+                data.conversation_count ??
+                data.conversations ??
+                0;
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Profile error:",
+            error
+        );
+
+    }
+
+}
+
+
+// ===============================
+// PROFILE BUTTON
+// ===============================
+
+profileButton?.addEventListener(
+    "click",
+    () => {
+
+        if (!profilePanel) {
+            return;
+        }
+
+        profilePanel.classList.toggle(
+            "hidden"
+        );
+
+    }
+);
+
+
+// ===============================
+// LOGOUT
+// ===============================
+
+logoutButton?.addEventListener(
+    "click",
+    () => {
+
+        stopSpeaking();
+
+        currentUser = null;
+
+        localStorage.removeItem(
+            "nexora_username"
+        );
+
+        if (chatBox) {
+            chatBox.innerHTML = "";
+        }
+
+        if (loginUsername) {
+            loginUsername.value = "";
+        }
+
+        if (loginPassword) {
+            loginPassword.value = "";
+        }
+
+        if (loginMessage) {
+            loginMessage.textContent = "";
+        }
+
+        if (signupMessage) {
+            signupMessage.textContent = "";
+        }
+
+        if (signupForm) {
+            signupForm.style.display =
+                "none";
+        }
+
+        if (loginForm) {
+            loginForm.style.display =
+                "block";
+        }
+
+        showAuth();
+
+    }
+);
 
 
 // ===============================
@@ -670,15 +1023,21 @@ async function loadHistory() {
 // ===============================
 
 function setupVoiceInput() {
-    if (!voiceButton) return;
+
+    if (!voiceButton) {
+        return;
+    }
 
     if (!SpeechRecognition) {
-        voiceButton.disabled = true;
+
+        voiceButton.disabled =
+            true;
 
         voiceButton.title =
             "Voice input is not supported in this browser.";
 
         if (voiceStatus) {
+
             voiceStatus.textContent =
                 "Voice input is not supported in this browser.";
         }
@@ -689,28 +1048,38 @@ function setupVoiceInput() {
     speechRecognition =
         new SpeechRecognition();
 
-    speechRecognition.continuous = false;
-    speechRecognition.interimResults = true;
-    speechRecognition.lang = "en-US";
+    speechRecognition.continuous =
+        false;
 
-    speechRecognition.onstart = () => {
-        isListening = true;
+    speechRecognition.interimResults =
+        true;
 
-        voiceButton.textContent =
-            "⏹️";
+    speechRecognition.lang =
+        "en-US";
 
-        voiceButton.classList.add(
-            "listening"
-        );
+    speechRecognition.onstart =
+        () => {
 
-        if (voiceStatus) {
-            voiceStatus.textContent =
-                "Listening... speak now";
-        }
-    };
+            isListening = true;
+
+            voiceButton.textContent =
+                "⏹️";
+
+            voiceButton.classList.add(
+                "listening"
+            );
+
+            if (voiceStatus) {
+
+                voiceStatus.textContent =
+                    "Listening... speak now";
+            }
+
+        };
 
     speechRecognition.onresult =
         (event) => {
+
             let finalText = "";
 
             for (
@@ -718,81 +1087,119 @@ function setupVoiceInput() {
                 i < event.results.length;
                 i++
             ) {
+
                 finalText +=
-                    event.results[i][0]
-                        .transcript;
+                    event.results[i][0].transcript;
             }
 
-            messageInput.value =
-                finalText.trim();
+            if (messageInput) {
+
+                messageInput.value =
+                    finalText.trim();
+            }
+
         };
 
     speechRecognition.onerror =
         (event) => {
+
             console.error(
                 "Speech recognition error:",
                 event.error
             );
 
             if (voiceStatus) {
+
                 if (
                     event.error ===
                     "not-allowed"
                 ) {
+
                     voiceStatus.textContent =
                         "Microphone permission was denied.";
+
                 } else {
+
                     voiceStatus.textContent =
                         "I couldn't hear that. Try again.";
                 }
             }
 
             stopListening();
+
         };
 
-    speechRecognition.onend = () => {
-        isListening = false;
+    speechRecognition.onend =
+        () => {
 
-        voiceButton.textContent =
-            "🎙️";
+            isListening = false;
 
-        voiceButton.classList.remove(
-            "listening"
-        );
+            voiceButton.textContent =
+                "🎙️";
 
-        const spokenText =
-            messageInput.value.trim();
+            voiceButton.classList.remove(
+                "listening"
+            );
 
-        if (spokenText) {
-            sendMessage();
-        }
+            const spokenText =
+                messageInput?.value.trim();
 
-        setTimeout(() => {
-            if (!isListening && voiceStatus) {
-                voiceStatus.textContent = "";
+            if (spokenText) {
+                sendMessage();
             }
-        }, 1500);
-    };
-}
 
+            setTimeout(
+                () => {
 
-// ===============================
-// START LISTENING
-// ===============================
+                    if (
+                        !isListening &&
+                        voiceStatus
+                    ) {
 
-function startListening() {
-    if (!speechRecognition) {
-        return;
-    }
+                        voiceStatus.textContent =
+                            "";
+                    }
 
-    try {
-        speechRecognition.start();
-    } catch (error) {
-        console.error(
-            "Could not start microphone:",
-            error
-        );
-    }
+                },
+                1500
+            );
+
+        };
+
+    voiceButton.addEventListener(
+        "click",
+        () => {
+
+            if (!speechRecognition) {
+                return;
+            }
+
+            if (isListening) {
+
+                stopListening();
+
+            } else {
+
+                try {
+
+                    messageInput.value = "";
+
+                    speechRecognition.start();
+
+                } catch (error) {
+
+                    console.error(
+                        "Voice start error:",
+                        error
+                    );
+
+                }
+
+            }
+
+        }
+    );
+
 }
 
 
@@ -801,19 +1208,23 @@ function startListening() {
 // ===============================
 
 function stopListening() {
-    if (!speechRecognition) {
-        return;
-    }
 
-    try {
-        speechRecognition.stop();
-    } catch (error) {
-        // Already stopped
+    if (
+        speechRecognition &&
+        isListening
+    ) {
+
+        try {
+            speechRecognition.stop();
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     isListening = false;
 
     if (voiceButton) {
+
         voiceButton.textContent =
             "🎙️";
 
@@ -821,34 +1232,21 @@ function stopListening() {
             "listening"
         );
     }
+
 }
 
 
 // ===============================
-// VOICE BUTTON
-// ===============================
-
-voiceButton?.addEventListener(
-    "click",
-    () => {
-        if (isListening) {
-            stopListening();
-        } else {
-            startListening();
-        }
-    }
-);
-
-
-// ===============================
-// VOICE REPLIES
+// SPEAK REPLY
 // ===============================
 
 function speakReply(text) {
+
     if (
         !voiceReplyToggle ||
         !voiceReplyToggle.checked
     ) {
+
         return;
     }
 
@@ -873,10 +1271,17 @@ function speakReply(text) {
             cleanText
         );
 
-    utterance.lang = "en-US";
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
+    utterance.lang =
+        "en-US";
+
+    utterance.rate =
+        1.0;
+
+    utterance.pitch =
+        1.0;
+
+    utterance.volume =
+        1.0;
 
     const voices =
         window.speechSynthesis.getVoices();
@@ -884,14 +1289,18 @@ function speakReply(text) {
     const preferredVoice =
         voices.find(
             voice =>
-                voice.lang === "en-US"
+                voice.lang ===
+                "en-US"
         ) ||
         voices.find(
             voice =>
-                voice.lang.startsWith("en")
+                voice.lang.startsWith(
+                    "en"
+                )
         );
 
     if (preferredVoice) {
+
         utterance.voice =
             preferredVoice;
     }
@@ -899,6 +1308,7 @@ function speakReply(text) {
     window.speechSynthesis.speak(
         utterance
     );
+
 }
 
 
@@ -907,11 +1317,14 @@ function speakReply(text) {
 // ===============================
 
 function stopSpeaking() {
-    if (!speechSynthesisSupported) {
-        return;
+
+    if (
+        speechSynthesisSupported
+    ) {
+
+        window.speechSynthesis.cancel();
     }
 
-    window.speechSynthesis.cancel();
 }
 
 
@@ -919,49 +1332,27 @@ function stopSpeaking() {
 // VOICE REPLY TOGGLE
 // ===============================
 
-voiceReplyToggle?.addEventListener(
-    "change",
-    () => {
-        if (
-            !voiceReplyToggle.checked
-        ) {
-            stopSpeaking();
+function setupVoiceReplyToggle() {
 
-            if (voiceStatus) {
-                voiceStatus.textContent =
-                    "Voice replies off";
-            }
-        } else {
-            if (voiceStatus) {
-                voiceStatus.textContent =
-                    "Voice replies on";
-            }
-        }
-
-        setTimeout(() => {
-            if (voiceStatus) {
-                voiceStatus.textContent =
-                    "";
-            }
-        }, 1500);
+    if (!voiceReplyToggle) {
+        return;
     }
-);
 
+    const savedVoiceSetting =
+        localStorage.getItem(
+            "nexora_voice_replies"
+        );
 
-// ===============================
-// LOAD SAVED VOICE SETTING
-// ===============================
+    if (
+        savedVoiceSetting ===
+        "off"
+    ) {
 
-const savedVoiceSetting =
-    localStorage.getItem(
-        "nexora_voice_replies"
-    );
-
-if (voiceReplyToggle) {
-    if (savedVoiceSetting === "off") {
         voiceReplyToggle.checked =
             false;
+
     } else {
+
         voiceReplyToggle.checked =
             true;
     }
@@ -969,24 +1360,65 @@ if (voiceReplyToggle) {
     voiceReplyToggle.addEventListener(
         "change",
         () => {
+
             localStorage.setItem(
                 "nexora_voice_replies",
                 voiceReplyToggle.checked
                     ? "on"
                     : "off"
             );
+
+            if (
+                !voiceReplyToggle.checked
+            ) {
+
+                stopSpeaking();
+
+                if (voiceStatus) {
+
+                    voiceStatus.textContent =
+                        "Voice replies off";
+                }
+
+            } else {
+
+                if (voiceStatus) {
+
+                    voiceStatus.textContent =
+                        "Voice replies on";
+                }
+            }
+
+            setTimeout(
+                () => {
+
+                    if (voiceStatus) {
+
+                        voiceStatus.textContent =
+                            "";
+                    }
+
+                },
+                1500
+            );
+
         }
     );
+
 }
 
 
 // ===============================
-// SPEECH SYNTHESIS VOICES
+// SPEECH VOICES READY
 // ===============================
 
-if (speechSynthesisSupported) {
+if (
+    speechSynthesisSupported
+) {
+
     window.speechSynthesis.onvoiceschanged =
         () => {
             window.speechSynthesis.getVoices();
         };
+
 }
