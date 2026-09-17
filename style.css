@@ -222,8 +222,33 @@ button {
 }
 
 .logo-text h1 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 20px;
     letter-spacing: 2px;
+}
+
+/* =========================================================
+   NEXORA VERIFICATION BADGE
+   ========================================================= */
+
+.verification-badge {
+    width: 17px;
+    height: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #4169ff;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: 0;
+    box-shadow:
+        0 0 0 2px #02040b,
+        0 0 10px rgba(65, 105, 255, 0.65);
 }
 
 .logo-text p {
@@ -458,6 +483,87 @@ button {
 }
 
 /* =========================================================
+   NEXORA TYPING INDICATOR
+   ========================================================= */
+
+.nexora-typing-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 75%;
+    margin-right: auto;
+    margin-bottom: 18px;
+    padding: 13px 17px;
+    border: 1px solid #202942;
+    border-left: 4px solid #5b4cff;
+    border-radius: 17px;
+    border-bottom-left-radius: 5px;
+    background: #0c1220;
+    color: #8992ad;
+    animation: typingAppear 0.2s ease-out;
+}
+
+.typing-name {
+    color: #aab2cc;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.typing-dots {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 18px;
+}
+
+.typing-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #6675ff;
+    animation: typingDot 1.2s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.typing-dots span:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+@keyframes typingDot {
+    0%,
+    60%,
+    100% {
+        transform: translateY(0);
+        opacity: 0.35;
+    }
+
+    30% {
+        transform: translateY(-4px);
+        opacity: 1;
+    }
+}
+
+@keyframes typingAppear {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================================
    INPUT AREA
    ========================================================= */
 
@@ -574,7 +680,6 @@ button {
 
 /* =========================================================
    VOICE REPLY TOGGLE
-   IMPORTANT: THIS IS NOW ALWAYS VISIBLE
    ========================================================= */
 
 .voice-toggle {
@@ -682,6 +787,12 @@ button {
         font-size: 17px;
     }
 
+    .verification-badge {
+        width: 15px;
+        height: 15px;
+        font-size: 9px;
+    }
+
     .logo-text p {
         font-size: 8px;
     }
@@ -707,6 +818,15 @@ button {
     .message {
         max-width: 88%;
         font-size: 15px;
+    }
+
+    .nexora-typing-message {
+        max-width: 88%;
+        padding: 12px 14px;
+    }
+
+    .typing-name {
+        font-size: 12px;
     }
 
     .input-area {
@@ -789,5 +909,9 @@ button {
 
     #messageInput {
         font-size: 14px;
+    }
+
+    .nexora-typing-message {
+        max-width: 92%;
     }
 }
