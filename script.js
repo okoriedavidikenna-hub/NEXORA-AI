@@ -504,6 +504,7 @@ try {
         "Profile error:",
         error
     );
+
 }
 
 }
@@ -687,10 +688,10 @@ const interval =
             dots = 0;
         }
 
-        typingDots.innerHTML =
+        typingDots.textContent =
             ".".repeat(dots);
 
-    }, 350);
+    }, 250);
 
 return interval;
 
@@ -764,50 +765,6 @@ chatBox.appendChild(
 
 chatBox.scrollTop =
     chatBox.scrollHeight;
-
-}
-
-/* =========================================================
-TYPE MESSAGE
-========================================================= */
-
-async function typeMessage(
-element,
-text
-) {
-
-if (!element) {
-    return;
-}
-
-element.textContent = "";
-
-const words =
-    text.split(" ");
-
-for (
-    let i = 0;
-    i < words.length;
-    i++
-) {
-
-    element.textContent +=
-        (i === 0 ? "" : " ") +
-        words[i];
-
-    if (chatBox) {
-        chatBox.scrollTop =
-            chatBox.scrollHeight;
-    }
-
-    await new Promise(
-        resolve =>
-            setTimeout(
-                resolve,
-                18
-            )
-    );
-}
 
 }
 
@@ -890,6 +847,11 @@ try {
         await response.json();
 
 
+    /* ==========================================
+       RESPONSE ARRIVED — REMOVE TYPING
+       IMMEDIATELY
+       ========================================== */
+
     if (typingAnimation) {
         clearInterval(
             typingAnimation
@@ -914,11 +876,15 @@ try {
     }
 
 
+    /* ==========================================
+       SHOW REPLY INSTANTLY
+       ========================================== */
+
     if (data.reply) {
 
         const replyMessage =
             createMessageElement(
-                "",
+                data.reply,
                 "ai"
             );
 
@@ -926,16 +892,18 @@ try {
             replyMessage.wrapper
         );
 
-        await typeMessage(
-            replyMessage.bubble,
-            data.reply
-        );
+        chatBox.scrollTop =
+            chatBox.scrollHeight;
 
         speakReply(
             data.reply
         );
     }
 
+
+    /* ==========================================
+       GENERATED IMAGE
+       ========================================== */
 
     if (data.image_url) {
 
@@ -1010,6 +978,7 @@ event => {
 
         sendMessage();
     }
+
 }
 
 );
@@ -1080,6 +1049,7 @@ async () => {
             "ai"
         );
     }
+
 }
 
 );
@@ -1154,6 +1124,7 @@ try {
                 "ai"
             );
         }
+
     }
 
 
@@ -1167,6 +1138,7 @@ try {
         "History error:",
         error
     );
+
 }
 
 }
@@ -1230,6 +1202,7 @@ speechRecognition.onstart =
             voiceStatus.textContent =
                 "Listening... speak now";
         }
+
     };
 
 
@@ -1282,6 +1255,7 @@ speechRecognition.onerror =
                 voiceStatus.textContent =
                     "I couldn't hear that. Try again.";
             }
+
         }
 
         stopListening();
@@ -1320,6 +1294,7 @@ speechRecognition.onend =
             }
 
         }, 1500);
+
     };
 
 }
@@ -1344,6 +1319,7 @@ try {
         "Could not start microphone:",
         error
     );
+
 }
 
 }
@@ -1377,6 +1353,7 @@ if (voiceButton) {
     voiceButton.classList.remove(
         "listening"
     );
+
 }
 
 }
@@ -1396,7 +1373,9 @@ voiceButton?.addEventListener(
     } else {
 
         startListening();
+
     }
+
 }
 
 );
@@ -1523,6 +1502,7 @@ voiceReplyToggle?.addEventListener(
             voiceStatus.textContent =
                 "Voice replies on";
         }
+
     }
 
 
@@ -1533,6 +1513,7 @@ voiceReplyToggle?.addEventListener(
         }
 
     }, 1500);
+
 }
 
 );
@@ -1573,6 +1554,7 @@ voiceReplyToggle.addEventListener(
                 ? "on"
                 : "off"
         );
+
     }
 );
 
