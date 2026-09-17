@@ -1,8 +1,8 @@
 const API_URL = "https://nexora-ai-9jgj.onrender.com";
 
-// ===============================
-// AUTH ELEMENTS
-// ===============================
+/* =========================================================
+   AUTH ELEMENTS
+   ========================================================= */
 
 const authScreen = document.getElementById("authScreen");
 const appScreen = document.getElementById("app");
@@ -18,26 +18,41 @@ const loginPassword = document.getElementById("loginPassword");
 
 const signupUsername = document.getElementById("signupUsername");
 const signupPassword = document.getElementById("signupPassword");
-const signupConfirmPassword = document.getElementById("signupConfirmPassword");
+const signupConfirmPassword =
+    document.getElementById("signupConfirmPassword");
 
-const authMessage = document.getElementById("authMessage");
+const authMessage =
+    document.getElementById("authMessage");
 
-const showSignup = document.getElementById("showSignupButton");
-const showLogin = document.getElementById("showLoginButton");
+const showSignup =
+    document.getElementById("showSignupButton");
+
+const showLogin =
+    document.getElementById("showLoginButton");
 
 
-// ===============================
-// APP ELEMENTS
-// ===============================
+/* =========================================================
+   APP ELEMENTS
+   ========================================================= */
 
-const messageInput = document.getElementById("messageInput");
-const sendButton = document.getElementById("sendButton");
-const chatBox = document.getElementById("chatBox");
+const messageInput =
+    document.getElementById("messageInput");
 
-const clearButton = document.getElementById("clearButton");
+const sendButton =
+    document.getElementById("sendButton");
 
-const profileButton = document.getElementById("profileButton");
-const profilePanel = document.getElementById("profilePanel");
+const chatBox =
+    document.getElementById("chatBox");
+
+const clearButton =
+    document.getElementById("clearButton");
+
+const profileButton =
+    document.getElementById("profileButton");
+
+const profilePanel =
+    document.getElementById("profilePanel");
+
 const closeProfileButton =
     document.getElementById("closeProfileButton");
 
@@ -51,9 +66,9 @@ const logoutButton =
     document.getElementById("logoutButton");
 
 
-// ===============================
-// VOICE ELEMENTS
-// ===============================
+/* =========================================================
+   VOICE ELEMENTS
+   ========================================================= */
 
 const voiceButton =
     document.getElementById("voiceButton");
@@ -75,20 +90,19 @@ const speechSynthesisSupported =
     "speechSynthesis" in window;
 
 
-// ===============================
-// USER SESSION
-// ===============================
+/* =========================================================
+   USER SESSION
+   ========================================================= */
 
 let currentUser =
     localStorage.getItem("nexora_username");
 
 
-// ===============================
-// AUTH SCREEN
-// ===============================
+/* =========================================================
+   AUTH SCREEN CONTROL
+   ========================================================= */
 
 function showLoginScreen() {
-
     if (loginScreen) {
         loginScreen.classList.remove("hidden");
         loginScreen.style.display = "block";
@@ -106,7 +120,6 @@ function showLoginScreen() {
 
 
 function showSignupScreen() {
-
     if (loginScreen) {
         loginScreen.classList.add("hidden");
         loginScreen.style.display = "none";
@@ -123,28 +136,33 @@ function showSignupScreen() {
 }
 
 
-// ===============================
-// STARTUP
-// ===============================
+/* =========================================================
+   STARTUP
+   ========================================================= */
 
-// Always begin at authentication.
-// This prevents an old localStorage session
-// from bypassing the login screen.
+function initializeApp() {
 
-if (authScreen) {
-    authScreen.style.display = "flex";
+    if (currentUser) {
+        showApp();
+    } else {
+
+        if (authScreen) {
+            authScreen.style.display = "flex";
+        }
+
+        if (appScreen) {
+            appScreen.classList.add("hidden");
+            appScreen.style.display = "none";
+        }
+
+        showLoginScreen();
+    }
 }
 
-if (appScreen) {
-    appScreen.style.display = "none";
-}
 
-showLoginScreen();
-
-
-// ===============================
-// AUTH SWITCH BUTTONS
-// ===============================
+/* =========================================================
+   AUTH SWITCHING
+   ========================================================= */
 
 showSignup?.addEventListener("click", () => {
     showSignupScreen();
@@ -156,54 +174,81 @@ showLogin?.addEventListener("click", () => {
 });
 
 
-// ===============================
-// SIGN UP
-// ===============================
+/* =========================================================
+   SIGNUP
+   ========================================================= */
 
-signupForm?.addEventListener(
-    "submit",
-    async (event) => {
+signupForm?.addEventListener("submit", async (event) => {
 
-        event.preventDefault();
+    event.preventDefault();
 
-        const username =
-            signupUsername.value.trim();
+    const username =
+        signupUsername.value.trim();
 
-        const password =
-            signupPassword.value.trim();
+    const password =
+        signupPassword.value.trim();
 
-        const confirmPassword =
-            signupConfirmPassword
-                ? signupConfirmPassword.value.trim()
-                : "";
+    const confirmPassword =
+        signupConfirmPassword.value.trim();
 
-        if (!username || !password) {
 
-            if (authMessage) {
-                authMessage.textContent =
-                    "Please enter a username and password.";
-            }
+    if (!username || !password || !confirmPassword) {
 
-            return;
+        if (authMessage) {
+            authMessage.textContent =
+                "Please fill in all fields.";
         }
 
+        return;
+    }
 
-        if (password.length < 4) {
 
-            if (authMessage) {
-                authMessage.textContent =
-                    "Password must be at least 4 characters.";
-            }
+    if (password !== confirmPassword) {
 
-            return;
+        if (authMessage) {
+            authMessage.textContent =
+                "Passwords do not match.";
         }
 
+        return;
+    }
 
-        if (password !== confirmPassword) {
+
+    if (authMessage) {
+        authMessage.textContent =
+            "Creating account...";
+    }
+
+
+    try {
+
+        const response =
+            await fetch(`${API_URL}/signup`, {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+                    username,
+                    password
+                })
+            });
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
 
             if (authMessage) {
                 authMessage.textContent =
-                    "Passwords do not match.";
+                    data.error ||
+                    "Signup failed.";
             }
 
             return;
@@ -212,206 +257,154 @@ signupForm?.addEventListener(
 
         if (authMessage) {
             authMessage.textContent =
-                "Creating account...";
+                "Account created successfully!";
         }
 
 
-        try {
-
-            const response =
-                await fetch(
-                    `${API_URL}/signup`,
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        body: JSON.stringify({
-                            username,
-                            password
-                        })
-                    }
-                );
+        signupUsername.value = "";
+        signupPassword.value = "";
+        signupConfirmPassword.value = "";
 
 
-            const data =
-                await response.json();
+        setTimeout(() => {
 
+            showLoginScreen();
 
-            if (!response.ok) {
-
-                if (authMessage) {
-                    authMessage.textContent =
-                        data.error ||
-                        "Signup failed.";
-                }
-
-                return;
-            }
-
-
-            if (authMessage) {
-                authMessage.textContent =
-                    "Account created successfully!";
-            }
-
-
-            signupUsername.value = "";
-            signupPassword.value = "";
-
-            if (signupConfirmPassword) {
-                signupConfirmPassword.value = "";
-            }
-
-
-            setTimeout(() => {
-
-                showLoginScreen();
-
+            if (loginUsername) {
                 loginUsername.value =
                     username;
-
-                loginPassword.focus();
-
-                if (authMessage) {
-                    authMessage.textContent =
-                        "Account created. You can now log in.";
-                }
-
-            }, 700);
-
-
-        } catch (error) {
-
-            console.error(
-                "Signup error:",
-                error
-            );
+            }
 
             if (authMessage) {
                 authMessage.textContent =
-                    "Could not connect to NEXORA.";
+                    "Account created. You can now log in.";
             }
+
+        }, 700);
+
+
+    } catch (error) {
+
+        console.error(
+            "Signup error:",
+            error
+        );
+
+        if (authMessage) {
+            authMessage.textContent =
+                "Could not connect to NEXORA.";
         }
     }
-);
+});
 
 
-// ===============================
-// LOGIN
-// ===============================
+/* =========================================================
+   LOGIN
+   ========================================================= */
 
-loginForm?.addEventListener(
-    "submit",
-    async (event) => {
+loginForm?.addEventListener("submit", async (event) => {
 
-        event.preventDefault();
-
-        const username =
-            loginUsername.value.trim();
-
-        const password =
-            loginPassword.value.trim();
+    event.preventDefault();
 
 
-        if (!username || !password) {
+    const username =
+        loginUsername.value.trim();
+
+    const password =
+        loginPassword.value.trim();
+
+
+    if (!username || !password) {
+
+        if (authMessage) {
+            authMessage.textContent =
+                "Please enter your username and password.";
+        }
+
+        return;
+    }
+
+
+    if (authMessage) {
+        authMessage.textContent =
+            "Logging in...";
+    }
+
+
+    try {
+
+        const response =
+            await fetch(`${API_URL}/login`, {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+                    username,
+                    password
+                })
+            });
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
 
             if (authMessage) {
                 authMessage.textContent =
-                    "Please enter your username and password.";
+                    data.error ||
+                    "Login failed.";
             }
 
             return;
         }
 
 
+        currentUser =
+            data.username || username;
+
+
+        localStorage.setItem(
+            "nexora_username",
+            currentUser
+        );
+
+
         if (authMessage) {
             authMessage.textContent =
-                "Logging in...";
+                "Login successful.";
         }
 
 
-        try {
-
-            const response =
-                await fetch(
-                    `${API_URL}/login`,
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        body: JSON.stringify({
-                            username,
-                            password
-                        })
-                    }
-                );
+        setTimeout(() => {
+            showApp();
+        }, 300);
 
 
-            const data =
-                await response.json();
+    } catch (error) {
 
+        console.error(
+            "Login error:",
+            error
+        );
 
-            if (!response.ok) {
-
-                if (authMessage) {
-                    authMessage.textContent =
-                        data.error ||
-                        "Login failed.";
-                }
-
-                return;
-            }
-
-
-            currentUser =
-                data.username ||
-                username;
-
-
-            localStorage.setItem(
-                "nexora_username",
-                currentUser
-            );
-
-
-            if (authMessage) {
-                authMessage.textContent =
-                    "Login successful.";
-            }
-
-
-            setTimeout(() => {
-                showApp();
-            }, 300);
-
-
-        } catch (error) {
-
-            console.error(
-                "Login error:",
-                error
-            );
-
-            if (authMessage) {
-                authMessage.textContent =
-                    "Could not connect to NEXORA.";
-            }
+        if (authMessage) {
+            authMessage.textContent =
+                "Could not connect to NEXORA.";
         }
     }
-);
+});
 
 
-// ===============================
-// SHOW APP
-// ===============================
+/* =========================================================
+   SHOW APP
+   ========================================================= */
 
 function showApp() {
 
@@ -439,51 +432,52 @@ function showApp() {
 }
 
 
-// ===============================
-// PROFILE
-// ===============================
+/* =========================================================
+   PROFILE
+   ========================================================= */
 
-profileButton?.addEventListener(
-    "click",
-    () => {
+profileButton?.addEventListener("click", () => {
 
-        if (!profilePanel) return;
-
-        const isHidden =
-            profilePanel.classList.contains("hidden");
-
-
-        if (isHidden) {
-
-            profilePanel.classList.remove("hidden");
-            profilePanel.style.display = "block";
-
-            loadProfile();
-
-        } else {
-
-            profilePanel.classList.add("hidden");
-            profilePanel.style.display = "none";
-        }
+    if (!profilePanel) {
+        return;
     }
-);
 
 
-closeProfileButton?.addEventListener(
-    "click",
-    () => {
+    const isHidden =
+        profilePanel.classList.contains("hidden");
 
-        if (!profilePanel) return;
+
+    if (isHidden) {
+
+        profilePanel.classList.remove("hidden");
+        profilePanel.style.display = "block";
+
+        loadProfile();
+
+    } else {
 
         profilePanel.classList.add("hidden");
         profilePanel.style.display = "none";
     }
-);
+});
+
+
+closeProfileButton?.addEventListener("click", () => {
+
+    if (!profilePanel) {
+        return;
+    }
+
+    profilePanel.classList.add("hidden");
+    profilePanel.style.display = "none";
+});
 
 
 async function loadProfile() {
 
-    if (!currentUser) return;
+    if (!currentUser) {
+        return;
+    }
 
 
     try {
@@ -520,54 +514,111 @@ async function loadProfile() {
 }
 
 
-// ===============================
-// LOGOUT
-// ===============================
+/* =========================================================
+   LOGOUT
+   ========================================================= */
 
-logoutButton?.addEventListener(
-    "click",
-    () => {
+logoutButton?.addEventListener("click", () => {
 
-        stopSpeaking();
-        stopListening();
+    stopSpeaking();
+    stopListening();
 
 
-        localStorage.removeItem(
-            "nexora_username"
-        );
+    localStorage.removeItem(
+        "nexora_username"
+    );
 
 
-        currentUser = null;
+    currentUser = null;
 
 
-        location.reload();
-    }
-);
+    location.reload();
+});
 
 
-// ===============================
-// ADD TEXT MESSAGE
-// ===============================
+/* =========================================================
+   MESSAGE HELPERS
+   ========================================================= */
 
-function addMessage(text, sender) {
+function createMessageElement(
+    text,
+    sender
+) {
 
-    if (!chatBox) return null;
-
-
-    const message =
+    const wrapper =
         document.createElement("div");
 
 
-    message.className =
-        `message ${sender}`;
+    const isUser =
+        sender === "user";
 
 
-    message.textContent =
-        text;
+    wrapper.className =
+        isUser
+            ? "message user-message"
+            : "message ai-message";
+
+
+    if (!isUser) {
+
+        const avatar =
+            document.createElement("div");
+
+        avatar.className =
+            "message-avatar";
+
+        avatar.textContent =
+            "N";
+
+        wrapper.appendChild(avatar);
+    }
+
+
+    const bubble =
+        document.createElement("div");
+
+
+    bubble.className =
+        "message-bubble";
+
+
+    bubble.textContent =
+        text || "";
+
+
+    wrapper.appendChild(bubble);
+
+
+    return {
+        wrapper,
+        bubble
+    };
+}
+
+
+/* =========================================================
+   ADD MESSAGE
+   ========================================================= */
+
+function addMessage(
+    text,
+    sender
+) {
+
+    if (!chatBox) {
+        return null;
+    }
+
+
+    const message =
+        createMessageElement(
+            text,
+            sender
+        );
 
 
     chatBox.appendChild(
-        message
+        message.wrapper
     );
 
 
@@ -575,20 +626,22 @@ function addMessage(text, sender) {
         chatBox.scrollHeight;
 
 
-    return message;
+    return message.bubble;
 }
 
 
-// ===============================
-// ADD GENERATED IMAGE
-// ===============================
+/* =========================================================
+   GENERATED IMAGE
+   ========================================================= */
 
 function addImageMessage(
     imageUrl,
     prompt
 ) {
 
-    if (!chatBox) return;
+    if (!chatBox) {
+        return;
+    }
 
 
     const wrapper =
@@ -596,7 +649,32 @@ function addImageMessage(
 
 
     wrapper.className =
-        "message ai image-message";
+        "message ai-message image-message";
+
+
+    const avatar =
+        document.createElement("div");
+
+
+    avatar.className =
+        "message-avatar";
+
+
+    avatar.textContent =
+        "N";
+
+
+    wrapper.appendChild(
+        avatar
+    );
+
+
+    const bubble =
+        document.createElement("div");
+
+
+    bubble.className =
+        "message-bubble";
 
 
     const image =
@@ -620,8 +698,13 @@ function addImageMessage(
         "lazy";
 
 
-    wrapper.appendChild(
+    bubble.appendChild(
         image
+    );
+
+
+    wrapper.appendChild(
+        bubble
     );
 
 
@@ -635,16 +718,18 @@ function addImageMessage(
 }
 
 
-// ===============================
-// TYPE MESSAGE
-// ===============================
+/* =========================================================
+   TYPE MESSAGE
+   ========================================================= */
 
 async function typeMessage(
     element,
     text
 ) {
 
-    if (!element) return;
+    if (!element) {
+        return;
+    }
 
 
     element.textContent = "";
@@ -682,20 +767,24 @@ async function typeMessage(
 }
 
 
-// ===============================
-// SEND MESSAGE
-// ===============================
+/* =========================================================
+   SEND MESSAGE
+   ========================================================= */
 
 async function sendMessage() {
 
-    if (!messageInput) return;
+    if (!messageInput) {
+        return;
+    }
 
 
     const message =
         messageInput.value.trim();
 
 
-    if (!message) return;
+    if (!message) {
+        return;
+    }
 
 
     if (!currentUser) {
@@ -736,6 +825,7 @@ async function sendMessage() {
             await fetch(
                 `${API_URL}/chat`,
                 {
+
                     method: "POST",
 
                     headers: {
@@ -759,7 +849,13 @@ async function sendMessage() {
 
 
         if (thinkingMessage) {
-            thinkingMessage.remove();
+
+            const thinkingWrapper =
+                thinkingMessage.closest(
+                    ".message"
+                );
+
+            thinkingWrapper?.remove();
         }
 
 
@@ -778,14 +874,19 @@ async function sendMessage() {
         if (data.reply) {
 
             const replyMessage =
-                addMessage(
+                createMessageElement(
                     "",
                     "ai"
                 );
 
 
+            chatBox.appendChild(
+                replyMessage.wrapper
+            );
+
+
             await typeMessage(
-                replyMessage,
+                replyMessage.bubble,
                 data.reply
             );
 
@@ -815,7 +916,13 @@ async function sendMessage() {
 
 
         if (thinkingMessage) {
-            thinkingMessage.remove();
+
+            const thinkingWrapper =
+                thinkingMessage.closest(
+                    ".message"
+                );
+
+            thinkingWrapper?.remove();
         }
 
 
@@ -837,9 +944,9 @@ async function sendMessage() {
 }
 
 
-// ===============================
-// SEND BUTTON
-// ===============================
+/* =========================================================
+   SEND BUTTON
+   ========================================================= */
 
 sendButton?.addEventListener(
     "click",
@@ -847,13 +954,13 @@ sendButton?.addEventListener(
 );
 
 
-// ===============================
-// ENTER TO SEND
-// ===============================
+/* =========================================================
+   ENTER TO SEND
+   ========================================================= */
 
 messageInput?.addEventListener(
     "keydown",
-    (event) => {
+    event => {
 
         if (
             event.key === "Enter" &&
@@ -868,15 +975,17 @@ messageInput?.addEventListener(
 );
 
 
-// ===============================
-// CLEAR CHAT
-// ===============================
+/* =========================================================
+   CLEAR CHAT
+   ========================================================= */
 
 clearButton?.addEventListener(
     "click",
     async () => {
 
-        if (!currentUser) return;
+        if (!currentUser) {
+            return;
+        }
 
 
         try {
@@ -885,6 +994,7 @@ clearButton?.addEventListener(
                 await fetch(
                     `${API_URL}/clear`,
                     {
+
                         method: "POST",
 
                         headers: {
@@ -907,9 +1017,7 @@ clearButton?.addEventListener(
             }
 
 
-            if (chatBox) {
-                chatBox.innerHTML = "";
-            }
+            chatBox.innerHTML = "";
 
 
             addMessage(
@@ -938,13 +1046,15 @@ clearButton?.addEventListener(
 );
 
 
-// ===============================
-// LOAD HISTORY
-// ===============================
+/* =========================================================
+   LOAD HISTORY
+   ========================================================= */
 
 async function loadHistory() {
 
-    if (!currentUser) return;
+    if (!currentUser) {
+        return;
+    }
 
 
     try {
@@ -961,22 +1071,16 @@ async function loadHistory() {
 
         if (
             !response.ok ||
-            !Array.isArray(
-                data.history
-            )
+            !Array.isArray(data.history)
         ) {
             return;
         }
 
 
-        if (chatBox) {
-            chatBox.innerHTML = "";
-        }
+        chatBox.innerHTML = "";
 
 
-        if (
-            data.history.length === 0
-        ) {
+        if (data.history.length === 0) {
 
             addMessage(
                 `Welcome back, ${currentUser}! I'm NEXORA. How can I help you?`,
@@ -1016,10 +1120,8 @@ async function loadHistory() {
         }
 
 
-        if (chatBox) {
-            chatBox.scrollTop =
-                chatBox.scrollHeight;
-        }
+        chatBox.scrollTop =
+            chatBox.scrollHeight;
 
 
     } catch (error) {
@@ -1032,13 +1134,15 @@ async function loadHistory() {
 }
 
 
-// ===============================
-// VOICE INPUT
-// ===============================
+/* =========================================================
+   VOICE INPUT
+   ========================================================= */
 
 function setupVoiceInput() {
 
-    if (!voiceButton) return;
+    if (!voiceButton) {
+        return;
+    }
 
 
     if (!SpeechRecognition) {
@@ -1052,6 +1156,7 @@ function setupVoiceInput() {
 
 
         if (voiceStatus) {
+
             voiceStatus.textContent =
                 "Voice input is not supported in this browser.";
         }
@@ -1080,7 +1185,8 @@ function setupVoiceInput() {
     speechRecognition.onstart =
         () => {
 
-            isListening = true;
+            isListening =
+                true;
 
 
             voiceButton.textContent =
@@ -1093,6 +1199,7 @@ function setupVoiceInput() {
 
 
             if (voiceStatus) {
+
                 voiceStatus.textContent =
                     "Listening... speak now";
             }
@@ -1100,9 +1207,10 @@ function setupVoiceInput() {
 
 
     speechRecognition.onresult =
-        (event) => {
+        event => {
 
-            let finalText = "";
+            let finalText =
+                "";
 
 
             for (
@@ -1121,15 +1229,13 @@ function setupVoiceInput() {
             }
 
 
-            if (messageInput) {
-                messageInput.value =
-                    finalText.trim();
-            }
+            messageInput.value =
+                finalText.trim();
         };
 
 
     speechRecognition.onerror =
-        (event) => {
+        event => {
 
             console.error(
                 "Speech recognition error:",
@@ -1162,24 +1268,21 @@ function setupVoiceInput() {
     speechRecognition.onend =
         () => {
 
-            isListening = false;
+            isListening =
+                false;
 
 
-            if (voiceButton) {
+            voiceButton.textContent =
+                "🎙️";
 
-                voiceButton.textContent =
-                    "🎙️";
 
-                voiceButton.classList.remove(
-                    "listening"
-                );
-            }
+            voiceButton.classList.remove(
+                "listening"
+            );
 
 
             const spokenText =
-                messageInput
-                    ? messageInput.value.trim()
-                    : "";
+                messageInput.value.trim();
 
 
             if (spokenText) {
@@ -1203,9 +1306,9 @@ function setupVoiceInput() {
 }
 
 
-// ===============================
-// START LISTENING
-// ===============================
+/* =========================================================
+   START LISTENING
+   ========================================================= */
 
 function startListening() {
 
@@ -1228,9 +1331,9 @@ function startListening() {
 }
 
 
-// ===============================
-// STOP LISTENING
-// ===============================
+/* =========================================================
+   STOP LISTENING
+   ========================================================= */
 
 function stopListening() {
 
@@ -1248,7 +1351,8 @@ function stopListening() {
     }
 
 
-    isListening = false;
+    isListening =
+        false;
 
 
     if (voiceButton) {
@@ -1264,9 +1368,9 @@ function stopListening() {
 }
 
 
-// ===============================
-// VOICE BUTTON
-// ===============================
+/* =========================================================
+   VOICE BUTTON
+   ========================================================= */
 
 voiceButton?.addEventListener(
     "click",
@@ -1284,9 +1388,9 @@ voiceButton?.addEventListener(
 );
 
 
-// ===============================
-// VOICE REPLIES
-// ===============================
+/* =========================================================
+   VOICE REPLIES
+   ========================================================= */
 
 function speakReply(text) {
 
@@ -1303,10 +1407,7 @@ function speakReply(text) {
     }
 
 
-    if (
-        !text ||
-        !text.trim()
-    ) {
+    if (!text || !text.trim()) {
         return;
     }
 
@@ -1375,9 +1476,9 @@ function speakReply(text) {
 }
 
 
-// ===============================
-// STOP SPEAKING
-// ===============================
+/* =========================================================
+   STOP SPEAKING
+   ========================================================= */
 
 function stopSpeaking() {
 
@@ -1390,9 +1491,9 @@ function stopSpeaking() {
 }
 
 
-// ===============================
-// VOICE REPLY TOGGLE
-// ===============================
+/* =========================================================
+   VOICE REPLY TOGGLE
+   ========================================================= */
 
 voiceReplyToggle?.addEventListener(
     "change",
@@ -1406,6 +1507,7 @@ voiceReplyToggle?.addEventListener(
 
 
             if (voiceStatus) {
+
                 voiceStatus.textContent =
                     "Voice replies off";
             }
@@ -1413,6 +1515,7 @@ voiceReplyToggle?.addEventListener(
         } else {
 
             if (voiceStatus) {
+
                 voiceStatus.textContent =
                     "Voice replies on";
             }
@@ -1422,8 +1525,7 @@ voiceReplyToggle?.addEventListener(
         setTimeout(() => {
 
             if (voiceStatus) {
-                voiceStatus.textContent =
-                    "";
+                voiceStatus.textContent = "";
             }
 
         }, 1500);
@@ -1431,9 +1533,9 @@ voiceReplyToggle?.addEventListener(
 );
 
 
-// ===============================
-// LOAD SAVED VOICE SETTING
-// ===============================
+/* =========================================================
+   SAVE VOICE SETTING
+   ========================================================= */
 
 const savedVoiceSetting =
     localStorage.getItem(
@@ -1464,7 +1566,6 @@ if (voiceReplyToggle) {
 
             localStorage.setItem(
                 "nexora_voice_replies",
-
                 voiceReplyToggle.checked
                     ? "on"
                     : "off"
@@ -1474,9 +1575,9 @@ if (voiceReplyToggle) {
 }
 
 
-// ===============================
-// SPEECH SYNTHESIS VOICES
-// ===============================
+/* =========================================================
+   SPEECH SYNTHESIS VOICES
+   ========================================================= */
 
 if (speechSynthesisSupported) {
 
@@ -1487,3 +1588,10 @@ if (speechSynthesisSupported) {
                 .getVoices();
         };
 }
+
+
+/* =========================================================
+   START NEXORA
+   ========================================================= */
+
+initializeApp();
