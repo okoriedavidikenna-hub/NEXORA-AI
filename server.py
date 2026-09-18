@@ -429,7 +429,7 @@ def create_conversation(username, title="New chat"):
                     (id, username, title, created_at, updated_at)
                     VALUES(%s, %s, %s, %s, %s)
                 """, (
-                    uuid.UUID(conversation_id),
+                    conversation_id,
                     username,
                     title,
                     timestamp,
