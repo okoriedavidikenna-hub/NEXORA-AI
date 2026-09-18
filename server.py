@@ -487,7 +487,7 @@ def ensure_legacy_migration(username):
                             (conversation_id, role, content, created_at)
                             VALUES(%s, 'user', %s, %s)
                         """, (
-                            uuid.UUID(conversation["id"]),
+                            conversation["id"],
                             user_text,
                             timestamp
                         ))
@@ -498,7 +498,7 @@ def ensure_legacy_migration(username):
                             (conversation_id, role, content, created_at)
                             VALUES(%s, 'assistant', %s, %s)
                         """, (
-                            uuid.UUID(conversation["id"]),
+                            conversation["id"],
                             assistant_text,
                             timestamp
                         ))
@@ -509,7 +509,7 @@ def ensure_legacy_migration(username):
                     WHERE id=%s AND username=%s
                 """, (
                     now_iso(),
-                    uuid.UUID(conversation["id"]),
+                    conversation["id"],
                     username
                 ))
 
@@ -575,7 +575,7 @@ def get_messages(username, conversation_id):
                     FROM messages
                     WHERE conversation_id=%s
                     ORDER BY id ASC
-                """, (uuid.UUID(conversation_id),))
+                """, (conversation_id,))
 
                 rows = cur.fetchall()
 
@@ -647,7 +647,7 @@ def add_message(
                     WHERE id=%s AND username=%s
                 """, (
                     timestamp,
-                    uuid.UUID(conversation_id),
+                    conversation_id,
                     username
                 ))
 
@@ -710,7 +710,7 @@ def clear_conversation(username, conversation_id):
                 cur.execute("""
                     DELETE FROM messages
                     WHERE conversation_id=%s
-                """, (uuid.UUID(conversation_id),))
+                """, (conversation_id,))
 
                 cur.execute("""
                     UPDATE conversations
@@ -718,7 +718,7 @@ def clear_conversation(username, conversation_id):
                     WHERE id=%s AND username=%s
                 """, (
                     timestamp,
-                    uuid.UUID(conversation_id),
+                    conversation_id,
                     username
                 ))
 
@@ -1254,7 +1254,7 @@ def delete_conversation(conversation_id):
                     DELETE FROM conversations
                     WHERE id=%s AND username=%s
                 """, (
-                    uuid.UUID(conversation_id),
+                    conversation_id,
                     username
                 ))
             conn.commit()
