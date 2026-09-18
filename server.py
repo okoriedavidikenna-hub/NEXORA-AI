@@ -631,7 +631,7 @@ def add_message(
                     VALUES(%s, %s, %s, %s, %s, %s)
                     RETURNING id
                 """, (
-                    uuid.UUID(conversation_id),
+                   (conversation_id),
                     role,
                     content,
                     image_url,
