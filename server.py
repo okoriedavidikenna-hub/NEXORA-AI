@@ -367,11 +367,6 @@ def find_conversation(username, conversation_id):
         return None
 
     if db_enabled():
-        try:
-            parsed_id = uuid.UUID(conversation_id)
-        except Exception:
-            return None
-
         conn = get_db()
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -379,7 +374,7 @@ def find_conversation(username, conversation_id):
                     SELECT id, username, title, created_at, updated_at
                     FROM conversations
                     WHERE id=%s AND username=%s
-                """, (parsed_id, username))
+                """, (conversation_id, username))
 
                 row = cur.fetchone()
 
