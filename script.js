@@ -241,6 +241,21 @@ try {
         await response.json();
 
 
+    /* =====================================================
+       SIGNUP DEBUG INFORMATION
+       ===================================================== */
+
+    console.log(
+        "SIGNUP STATUS:",
+        response.status
+    );
+
+    console.log(
+        "SIGNUP RESPONSE:",
+        data
+    );
+
+
     if (!response.ok) {
 
         if (authMessage) {
