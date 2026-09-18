@@ -67,6 +67,32 @@ const logoutButton =
 
 
 /* =========================================================
+CONVERSATION DRAWER ELEMENTS
+========================================================= */
+
+const menuButton =
+    document.getElementById("menuButton");
+
+const sideDrawer =
+    document.getElementById("sideDrawer");
+
+const drawerOverlay =
+    document.getElementById("drawerOverlay");
+
+const closeDrawerButton =
+    document.getElementById("closeDrawerButton");
+
+const newChatButton =
+    document.getElementById("newChatButton");
+
+const conversationList =
+    document.getElementById("conversationList");
+
+const drawerProfileButton =
+    document.getElementById("drawerProfileButton");
+
+
+/* =========================================================
 VOICE ELEMENTS
 ========================================================= */
 
@@ -98,749 +124,11 @@ let currentUser =
     localStorage.getItem("nexora_username");
 
 let currentConversationId =
-    localStorage.getItem("nexora_conversation_id");
+    localStorage.getItem(
+        "nexora_conversation_id"
+    );
 
 let conversationsCache = [];
-
-
-/* =========================================================
-DRAWER ELEMENTS
-========================================================= */
-
-let menuButton = null;
-let sideDrawer = null;
-let drawerOverlay = null;
-let closeDrawerButton = null;
-let newChatButton = null;
-let conversationList = null;
-let drawerProfileButton = null;
-
-
-/* =========================================================
-CREATE DRAWER CSS
-========================================================= */
-
-function injectDrawerStyles() {
-
-    if (document.getElementById("nexoraDrawerStyles")) {
-        return;
-    }
-
-    const style = document.createElement("style");
-
-    style.id = "nexoraDrawerStyles";
-
-    style.textContent = `
-
-        .nexora-menu-button {
-            width: 42px;
-            height: 42px;
-            border: 1px solid rgba(255,255,255,0.10);
-            border-radius: 12px;
-            background: rgba(255,255,255,0.06);
-            color: #ffffff;
-            font-size: 22px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.2s ease;
-            flex-shrink: 0;
-        }
-
-        .nexora-menu-button:hover {
-            background: rgba(255,255,255,0.12);
-            transform: scale(1.03);
-        }
-
-        .nexora-drawer-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.55);
-            backdrop-filter: blur(3px);
-            -webkit-backdrop-filter: blur(3px);
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-            transition: opacity 0.25s ease;
-            z-index: 9998;
-        }
-
-        .nexora-drawer-overlay.active {
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
-        }
-
-        .nexora-side-drawer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            width: min(330px, 86vw);
-            background: #0b0f16;
-            border-right: 1px solid rgba(255,255,255,0.10);
-            box-shadow: 12px 0 35px rgba(0,0,0,0.45);
-            transform: translateX(-105%);
-            transition: transform 0.28s cubic-bezier(.2,.8,.2,1);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .nexora-side-drawer.open {
-            transform: translateX(0);
-        }
-
-        .nexora-drawer-header {
-            min-height: 74px;
-            padding: 14px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-            flex-shrink: 0;
-        }
-
-        .nexora-drawer-brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .nexora-drawer-logo {
-            width: 38px;
-            height: 38px;
-            border-radius: 11px;
-            background: linear-gradient(135deg, #6c63ff, #8b5cf6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            color: white;
-            box-shadow: 0 5px 18px rgba(108,99,255,0.25);
-        }
-
-        .nexora-drawer-brand-text {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .nexora-drawer-brand-name {
-            color: #ffffff;
-            font-size: 17px;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-        }
-
-        .nexora-drawer-brand-sub {
-            color: rgba(255,255,255,0.45);
-            font-size: 9px;
-            letter-spacing: 1.5px;
-            margin-top: 2px;
-        }
-
-        .nexora-drawer-close {
-            width: 38px;
-            height: 38px;
-            border: 0;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.06);
-            color: white;
-            font-size: 21px;
-            cursor: pointer;
-        }
-
-        .nexora-drawer-new {
-            margin: 16px;
-            margin-bottom: 10px;
-            padding: 13px 15px;
-            border: 1px solid rgba(255,255,255,0.09);
-            border-radius: 13px;
-            background: linear-gradient(
-                135deg,
-                rgba(108,99,255,0.95),
-                rgba(139,92,246,0.95)
-            );
-            color: white;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 8px 22px rgba(108,99,255,0.18);
-        }
-
-        .nexora-drawer-new:disabled {
-            opacity: 0.6;
-            cursor: wait;
-        }
-
-        .nexora-drawer-section {
-            padding: 8px 16px 6px;
-            color: rgba(255,255,255,0.42);
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-        }
-
-        .nexora-conversation-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 4px 10px 14px;
-            overscroll-behavior: contain;
-        }
-
-        .nexora-conversation-list::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .nexora-conversation-list::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.12);
-            border-radius: 10px;
-        }
-
-        .nexora-conversation-item {
-            position: relative;
-            margin: 3px 0;
-            padding: 12px 42px 10px 12px;
-            border-radius: 11px;
-            cursor: pointer;
-            transition: background 0.18s ease;
-            color: white;
-        }
-
-        .nexora-conversation-item:hover {
-            background: rgba(255,255,255,0.06);
-        }
-
-        .nexora-conversation-item.active {
-            background: rgba(108,99,255,0.16);
-            border: 1px solid rgba(108,99,255,0.22);
-        }
-
-        .nexora-conversation-title {
-            font-size: 13px;
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .nexora-conversation-date {
-            margin-top: 4px;
-            font-size: 10px;
-            color: rgba(255,255,255,0.38);
-        }
-
-        .nexora-delete-conversation {
-            position: absolute;
-            right: 9px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 30px;
-            height: 30px;
-            border: 0;
-            border-radius: 8px;
-            background: transparent;
-            color: rgba(255,255,255,0.38);
-            cursor: pointer;
-            opacity: 0;
-            transition: 0.18s ease;
-        }
-
-        .nexora-conversation-item:hover
-        .nexora-delete-conversation {
-            opacity: 1;
-        }
-
-        .nexora-delete-conversation:hover {
-            background: rgba(255,70,70,0.14);
-            color: #ff7b7b;
-        }
-
-        .nexora-conversation-empty {
-            padding: 28px 15px;
-            text-align: center;
-            color: rgba(255,255,255,0.38);
-            font-size: 12px;
-            line-height: 1.6;
-        }
-
-        .nexora-drawer-footer {
-            padding: 10px;
-            border-top: 1px solid rgba(255,255,255,0.08);
-            flex-shrink: 0;
-        }
-
-        .nexora-drawer-profile {
-            width: 100%;
-            border: 0;
-            border-radius: 11px;
-            background: rgba(255,255,255,0.05);
-            color: white;
-            padding: 12px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            text-align: left;
-        }
-
-        .nexora-drawer-profile:hover {
-            background: rgba(255,255,255,0.09);
-        }
-
-        .nexora-profile-icon {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: rgba(108,99,255,0.22);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .nexora-profile-text {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-
-        .nexora-profile-label {
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .nexora-profile-user {
-            font-size: 10px;
-            color: rgba(255,255,255,0.42);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        @media (max-width: 480px) {
-
-            .nexora-side-drawer {
-                width: 86vw;
-            }
-
-            .nexora-menu-button {
-                width: 40px;
-                height: 40px;
-            }
-
-            .nexora-delete-conversation {
-                opacity: 1;
-            }
-
-        }
-
-    `;
-
-    document.head.appendChild(style);
-}
-
-
-/* =========================================================
-CREATE DRAWER HTML
-========================================================= */
-
-function createDrawer() {
-
-    injectDrawerStyles();
-
-    const existingDrawer =
-        document.getElementById("nexoraSideDrawer");
-
-    if (existingDrawer) {
-        connectDrawerElements();
-        return;
-    }
-
-    /* MENU BUTTON */
-
-    const headerActions =
-        document.querySelector(".header-actions");
-
-    if (
-        headerActions &&
-        !document.getElementById("nexoraMenuButton")
-    ) {
-
-        menuButton =
-            document.createElement("button");
-
-        menuButton.id =
-            "nexoraMenuButton";
-
-        menuButton.className =
-            "nexora-menu-button";
-
-        menuButton.type =
-            "button";
-
-        menuButton.setAttribute(
-            "aria-label",
-            "Open conversations"
-        );
-
-        menuButton.innerHTML =
-            "☰";
-
-        headerActions.insertBefore(
-            menuButton,
-            headerActions.firstChild
-        );
-
-    }
-
-
-    /* OVERLAY */
-
-    drawerOverlay =
-        document.createElement("div");
-
-    drawerOverlay.id =
-        "nexoraDrawerOverlay";
-
-    drawerOverlay.className =
-        "nexora-drawer-overlay";
-
-
-    /* DRAWER */
-
-    sideDrawer =
-        document.createElement("aside");
-
-    sideDrawer.id =
-        "nexoraSideDrawer";
-
-    sideDrawer.className =
-        "nexora-side-drawer";
-
-    sideDrawer.setAttribute(
-        "aria-label",
-        "NEXORA conversations"
-    );
-
-
-    sideDrawer.innerHTML = `
-
-        <div class="nexora-drawer-header">
-
-            <div class="nexora-drawer-brand">
-
-                <div class="nexora-drawer-logo">
-                    N
-                </div>
-
-                <div class="nexora-drawer-brand-text">
-
-                    <div class="nexora-drawer-brand-name">
-                        NEXORA ✓
-                    </div>
-
-                    <div class="nexora-drawer-brand-sub">
-                        AI ASSISTANT
-                    </div>
-
-                </div>
-
-            </div>
-
-            <button
-                id="nexoraCloseDrawer"
-                class="nexora-drawer-close"
-                type="button"
-                aria-label="Close drawer"
-            >
-                ×
-            </button>
-
-        </div>
-
-
-        <button
-            id="nexoraNewChat"
-            class="nexora-drawer-new"
-            type="button"
-        >
-            <span style="font-size:19px;">＋</span>
-            <span>New Chat</span>
-        </button>
-
-
-        <div class="nexora-drawer-section">
-            Recent conversations
-        </div>
-
-
-        <div
-            id="nexoraConversationList"
-            class="nexora-conversation-list"
-        >
-        </div>
-
-
-        <div class="nexora-drawer-footer">
-
-            <button
-                id="nexoraDrawerProfile"
-                class="nexora-drawer-profile"
-                type="button"
-            >
-
-                <div class="nexora-profile-icon">
-                    👤
-                </div>
-
-                <div class="nexora-profile-text">
-
-                    <div class="nexora-profile-label">
-                        Profile
-                    </div>
-
-                    <div
-                        id="nexoraDrawerUsername"
-                        class="nexora-profile-user"
-                    >
-                        User
-                    </div>
-
-                </div>
-
-            </button>
-
-        </div>
-    `;
-
-
-    document.body.appendChild(
-        drawerOverlay
-    );
-
-    document.body.appendChild(
-        sideDrawer
-    );
-
-
-    connectDrawerElements();
-
-    setupDrawerEvents();
-
-}
-
-
-/* =========================================================
-CONNECT DRAWER ELEMENTS
-========================================================= */
-
-function connectDrawerElements() {
-
-    menuButton =
-        document.getElementById(
-            "nexoraMenuButton"
-        );
-
-    sideDrawer =
-        document.getElementById(
-            "nexoraSideDrawer"
-        );
-
-    drawerOverlay =
-        document.getElementById(
-            "nexoraDrawerOverlay"
-        );
-
-    closeDrawerButton =
-        document.getElementById(
-            "nexoraCloseDrawer"
-        );
-
-    newChatButton =
-        document.getElementById(
-            "nexoraNewChat"
-        );
-
-    conversationList =
-        document.getElementById(
-            "nexoraConversationList"
-        );
-
-    drawerProfileButton =
-        document.getElementById(
-            "nexoraDrawerProfile"
-        );
-
-    const drawerUsername =
-        document.getElementById(
-            "nexoraDrawerUsername"
-        );
-
-    if (drawerUsername) {
-        drawerUsername.textContent =
-            currentUser || "User";
-    }
-
-}
-
-
-/* =========================================================
-DRAWER EVENTS
-========================================================= */
-
-function setupDrawerEvents() {
-
-    if (
-        menuButton &&
-        !menuButton.dataset.bound
-    ) {
-
-        menuButton.addEventListener(
-            "click",
-            openDrawer
-        );
-
-        menuButton.dataset.bound =
-            "true";
-    }
-
-
-    if (
-        closeDrawerButton &&
-        !closeDrawerButton.dataset.bound
-    ) {
-
-        closeDrawerButton.addEventListener(
-            "click",
-            closeDrawer
-        );
-
-        closeDrawerButton.dataset.bound =
-            "true";
-    }
-
-
-    if (
-        drawerOverlay &&
-        !drawerOverlay.dataset.bound
-    ) {
-
-        drawerOverlay.addEventListener(
-            "click",
-            closeDrawer
-        );
-
-        drawerOverlay.dataset.bound =
-            "true";
-    }
-
-
-    if (
-        newChatButton &&
-        !newChatButton.dataset.bound
-    ) {
-
-        newChatButton.addEventListener(
-            "click",
-            createNewChat
-        );
-
-        newChatButton.dataset.bound =
-            "true";
-    }
-
-
-    if (
-        drawerProfileButton &&
-        !drawerProfileButton.dataset.bound
-    ) {
-
-        drawerProfileButton.addEventListener(
-            "click",
-            () => {
-
-                closeDrawer();
-
-                if (profilePanel) {
-
-                    profilePanel.classList.remove(
-                        "hidden"
-                    );
-
-                    profilePanel.style.display =
-                        "block";
-                }
-
-                loadProfile();
-
-            }
-        );
-
-        drawerProfileButton.dataset.bound =
-            "true";
-    }
-
-}
-
-
-/* =========================================================
-OPEN DRAWER
-========================================================= */
-
-function openDrawer() {
-
-    createDrawer();
-
-    if (!sideDrawer) {
-        return;
-    }
-
-    sideDrawer.classList.add(
-        "open"
-    );
-
-    if (drawerOverlay) {
-
-        drawerOverlay.classList.add(
-            "active"
-        );
-
-    }
-
-    loadConversations();
-
-}
-
-
-/* =========================================================
-CLOSE DRAWER
-========================================================= */
-
-function closeDrawer() {
-
-    if (sideDrawer) {
-
-        sideDrawer.classList.remove(
-            "open"
-        );
-
-    }
-
-    if (drawerOverlay) {
-
-        drawerOverlay.classList.remove(
-            "active"
-        );
-
-    }
-
-}
 
 
 /* =========================================================
@@ -891,8 +179,6 @@ STARTUP
 
 function initializeApp() {
 
-    createDrawer();
-
     if (currentUser) {
 
         showApp();
@@ -909,7 +195,6 @@ function initializeApp() {
         }
 
         showLoginScreen();
-
     }
 
 }
@@ -1013,6 +298,17 @@ signupForm?.addEventListener(
                 await response.json();
 
 
+            console.log(
+                "SIGNUP STATUS:",
+                response.status
+            );
+
+            console.log(
+                "SIGNUP RESPONSE:",
+                data
+            );
+
+
             if (!response.ok) {
 
                 if (authMessage) {
@@ -1067,7 +363,6 @@ signupForm?.addEventListener(
                 authMessage.textContent =
                     "Could not connect to NEXORA.";
             }
-
         }
 
     }
@@ -1188,7 +483,6 @@ loginForm?.addEventListener(
                 authMessage.textContent =
                     "Could not connect to NEXORA.";
             }
-
         }
 
     }
@@ -1201,8 +495,6 @@ SHOW APP
 
 function showApp() {
 
-    createDrawer();
-
     if (authScreen) {
         authScreen.style.display = "none";
     }
@@ -1214,16 +506,6 @@ function showApp() {
 
     if (profileUsername) {
         profileUsername.textContent =
-            currentUser || "User";
-    }
-
-    const drawerUsername =
-        document.getElementById(
-            "nexoraDrawerUsername"
-        );
-
-    if (drawerUsername) {
-        drawerUsername.textContent =
             currentUser || "User";
     }
 
@@ -1285,7 +567,6 @@ profileButton?.addEventListener(
 
             profilePanel.style.display =
                 "none";
-
         }
 
     }
@@ -1376,9 +657,99 @@ logoutButton?.addEventListener(
         currentUser = null;
         currentConversationId = null;
 
+        location.reload();
+
+    }
+);
+
+
+/* =========================================================
+DRAWER — OPEN
+========================================================= */
+
+function openDrawer() {
+
+    if (!sideDrawer) {
+        return;
+    }
+
+    sideDrawer.classList.add(
+        "open"
+    );
+
+    if (drawerOverlay) {
+        drawerOverlay.classList.add(
+            "active"
+        );
+    }
+
+    loadConversations();
+
+}
+
+
+/* =========================================================
+DRAWER — CLOSE
+========================================================= */
+
+function closeDrawer() {
+
+    if (!sideDrawer) {
+        return;
+    }
+
+    sideDrawer.classList.remove(
+        "open"
+    );
+
+    if (drawerOverlay) {
+        drawerOverlay.classList.remove(
+            "active"
+        );
+    }
+
+}
+
+
+/* =========================================================
+DRAWER BUTTONS
+========================================================= */
+
+menuButton?.addEventListener(
+    "click",
+    openDrawer
+);
+
+
+closeDrawerButton?.addEventListener(
+    "click",
+    closeDrawer
+);
+
+
+drawerOverlay?.addEventListener(
+    "click",
+    closeDrawer
+);
+
+
+drawerProfileButton?.addEventListener(
+    "click",
+    () => {
+
         closeDrawer();
 
-        location.reload();
+        if (profilePanel) {
+
+            profilePanel.classList.remove(
+                "hidden"
+            );
+
+            profilePanel.style.display =
+                "block";
+        }
+
+        loadProfile();
 
     }
 );
@@ -1390,8 +761,6 @@ LOAD CONVERSATIONS
 
 async function loadConversations() {
 
-    createDrawer();
-
     if (
         !currentUser ||
         !conversationList
@@ -1401,7 +770,7 @@ async function loadConversations() {
 
 
     conversationList.innerHTML =
-        `<div class="nexora-conversation-empty">
+        `<div class="conversation-loading">
             Loading conversations...
         </div>`;
 
@@ -1427,7 +796,7 @@ async function loadConversations() {
         ) {
 
             conversationList.innerHTML =
-                `<div class="nexora-conversation-empty">
+                `<div class="conversation-empty">
                     Couldn't load conversations.
                 </div>`;
 
@@ -1459,10 +828,9 @@ async function loadConversations() {
 
 
         conversationList.innerHTML =
-            `<div class="nexora-conversation-empty">
+            `<div class="conversation-empty">
                 Couldn't connect to NEXORA.
             </div>`;
-
     }
 
 }
@@ -1490,7 +858,7 @@ function renderConversations(
     ) {
 
         conversationList.innerHTML =
-            `<div class="nexora-conversation-empty">
+            `<div class="conversation-empty">
                 No conversations yet.<br>
                 Start a new chat with NEXORA.
             </div>`;
@@ -1509,7 +877,7 @@ function renderConversations(
 
 
             item.className =
-                "nexora-conversation-item";
+                "conversation-item";
 
 
             if (
@@ -1524,7 +892,6 @@ function renderConversations(
                 item.classList.add(
                     "active"
                 );
-
             }
 
 
@@ -1533,10 +900,8 @@ function renderConversations(
                     "div"
                 );
 
-
             title.className =
-                "nexora-conversation-title";
-
+                "conversation-title";
 
             title.textContent =
                 conversation.title ||
@@ -1548,10 +913,8 @@ function renderConversations(
                     "div"
                 );
 
-
             date.className =
-                "nexora-conversation-date";
-
+                "conversation-date";
 
             date.textContent =
                 formatConversationDate(
@@ -1565,18 +928,14 @@ function renderConversations(
                     "button"
                 );
 
-
             deleteButton.className =
-                "nexora-delete-conversation";
-
+                "delete-conversation";
 
             deleteButton.type =
                 "button";
 
-
             deleteButton.title =
                 "Delete conversation";
-
 
             deleteButton.textContent =
                 "🗑";
@@ -1632,7 +991,7 @@ function renderConversations(
 
 
 /* =========================================================
-FORMAT DATE
+FORMAT CONVERSATION DATE
 ========================================================= */
 
 function formatConversationDate(
@@ -1691,7 +1050,7 @@ function formatConversationDate(
 
 
 /* =========================================================
-LOAD CONVERSATION
+LOAD ONE CONVERSATION
 ========================================================= */
 
 async function loadConversation(
@@ -1799,7 +1158,6 @@ async function loadConversation(
                             message.image_prompt ||
                             ""
                         );
-
                     }
 
                 }
@@ -1835,7 +1193,6 @@ async function loadConversation(
             "I couldn't load that conversation.",
             "ai"
         );
-
     }
 
 }
@@ -1844,6 +1201,12 @@ async function loadConversation(
 /* =========================================================
 NEW CHAT
 ========================================================= */
+
+newChatButton?.addEventListener(
+    "click",
+    createNewChat
+);
+
 
 async function createNewChat() {
 
@@ -1879,7 +1242,6 @@ async function createNewChat() {
                         title:
                             "New chat"
                     })
-
                 }
             );
 
@@ -1897,7 +1259,6 @@ async function createNewChat() {
             throw new Error(
                 "Could not create conversation"
             );
-
         }
 
 
@@ -2008,7 +1369,6 @@ async function deleteConversation(
             throw new Error(
                 "Delete failed"
             );
-
         }
 
 
@@ -2054,14 +1414,13 @@ async function deleteConversation(
         alert(
             "I couldn't delete that conversation."
         );
-
     }
 
 }
 
 
 /* =========================================================
-OPEN FIRST CONVERSATION OR NEW
+OPEN FIRST CONVERSATION OR CREATE ONE
 ========================================================= */
 
 async function openFirstConversationOrNew() {
@@ -2116,7 +1475,7 @@ async function openFirstConversationOrNew() {
 
 
 /* =========================================================
-MESSAGE ELEMENT
+MESSAGE HELPERS
 ========================================================= */
 
 function createMessageElement(
@@ -2159,7 +1518,6 @@ function createMessageElement(
         wrapper.appendChild(
             avatar
         );
-
     }
 
 
@@ -2226,7 +1584,7 @@ function addMessage(
 
 
 /* =========================================================
-TYPING INDICATOR
+NEXORA TYPING INDICATOR
 ========================================================= */
 
 function createTypingIndicator() {
@@ -2299,7 +1657,7 @@ function createTypingIndicator() {
 
 
 /* =========================================================
-TYPING ANIMATION
+TYPING DOT ANIMATION
 ========================================================= */
 
 function startTypingAnimation() {
@@ -2342,7 +1700,7 @@ function startTypingAnimation() {
 
 
 /* =========================================================
-IMAGE MESSAGE
+GENERATED IMAGE
 ========================================================= */
 
 function addImageMessage(
@@ -2469,6 +1827,11 @@ async function sendMessage() {
     }
 
 
+    /*
+     * If there is no conversation yet,
+     * create one before sending.
+     */
+
     if (!currentConversationId) {
 
         try {
@@ -2490,9 +1853,8 @@ async function sendMessage() {
                                 currentUser,
 
                             title:
-                                "New chat"
+                                message
                         })
-
                     }
                 );
 
@@ -2579,7 +1941,6 @@ async function sendMessage() {
                             currentConversationId
 
                     })
-
                 }
             );
 
@@ -2587,6 +1948,11 @@ async function sendMessage() {
         const data =
             await response.json();
 
+
+        /*
+         * Save conversation ID returned
+         * by the backend.
+         */
 
         if (data.conversation_id) {
 
@@ -2661,6 +2027,11 @@ async function sendMessage() {
 
         }
 
+
+        /*
+         * Refresh conversation list so
+         * the latest chat appears correctly.
+         */
 
         loadConversations();
 
@@ -2769,7 +2140,6 @@ clearButton?.addEventListener(
                             username:
                                 currentUser
                         })
-
                     }
                 );
 
@@ -2792,6 +2162,11 @@ clearButton?.addEventListener(
 
             stopSpeaking();
 
+
+            /*
+             * Refresh conversations because
+             * backend may have changed history.
+             */
 
             loadConversations();
 
@@ -2842,11 +2217,6 @@ function setupVoiceInput() {
 
         }
 
-        return;
-    }
-
-
-    if (speechRecognition) {
         return;
     }
 
@@ -3318,6 +2688,8 @@ SWIPE GESTURES
 
 let touchStartX = 0;
 let touchStartY = 0;
+let touchEndX = 0;
+let touchEndY = 0;
 
 
 document.addEventListener(
@@ -3366,16 +2738,18 @@ document.addEventListener(
         }
 
 
-        const touchEndX =
+        touchEndX =
             event.changedTouches[0].clientX;
 
-        const touchEndY =
+
+        touchEndY =
             event.changedTouches[0].clientY;
 
 
         const deltaX =
             touchEndX -
             touchStartX;
+
 
         const deltaY =
             touchEndY -
@@ -3387,10 +2761,15 @@ document.addEventListener(
             Math.abs(deltaY);
 
 
+        /*
+         * Swipe RIGHT from left edge
+         * to open drawer.
+         */
+
         if (
             horizontalSwipe &&
             touchStartX < 55 &&
-            deltaX > 70
+            deltaX > 75
         ) {
 
             openDrawer();
@@ -3398,13 +2777,18 @@ document.addEventListener(
         }
 
 
+        /*
+         * Swipe LEFT anywhere while
+         * drawer is open.
+         */
+
         if (
             horizontalSwipe &&
             sideDrawer &&
             sideDrawer.classList.contains(
                 "open"
             ) &&
-            deltaX < -70
+            deltaX < -75
         ) {
 
             closeDrawer();
@@ -3414,6 +2798,8 @@ document.addEventListener(
 
         touchStartX = 0;
         touchStartY = 0;
+        touchEndX = 0;
+        touchEndY = 0;
 
     },
     {
