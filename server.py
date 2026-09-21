@@ -8,8 +8,10 @@ import json
 import uuid
 import hashlib
 import secrets
-import smtplib
-from email.message import EmailMessage
+import html
+import urllib.request
+import urllib.error
+
 from datetime import datetime, timezone, timedelta
 from urllib.parse import quote
 
@@ -68,21 +70,40 @@ OPENAI_IMAGE_MODEL = os.getenv(
     "gpt-image-2"
 )
 
-DATABASE_URL = os.getenv("DATABASE_URL", "")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    ""
+)
 
-# Password-reset email settings.
-SMTP_HOST = os.getenv("SMTP_HOST", "")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USERNAME)
+OPENAI_API_KEY = os.getenv(
+    "OPENAI_API_KEY",
+    ""
+)
+
+# ============================================================
+# PASSWORD RESET EMAIL — RESEND
+# ============================================================
+
+RESEND_API_KEY = os.getenv(
+    "RESEND_API_KEY",
+    ""
+)
+
+RESEND_FROM = os.getenv(
+    "RESEND_FROM",
+    "onboarding@resend.dev"
+)
 
 # URL of the website where the reset page lives.
 FRONTEND_URL = os.getenv(
     "FRONTEND_URL",
     "https://nexora-ai.netlify.app"
 ).rstrip("/")
+
+
+# ============================================================
+# OPENAI CLIENT
+# ============================================================
 
 client = (
     OpenAI(api_key=OPENAI_API_KEY)
@@ -138,7 +159,10 @@ def verify_password(password, stored):
             120000
         ).hex()
 
-        return secrets.compare_digest(check, digest)
+        return secrets.compare_digest(
+            check,
+            digest
+        )
 
     except Exception:
         return False
@@ -149,7 +173,12 @@ def load_json(path, default):
         return default
 
     try:
-        with open(path, "r", encoding="utf-8") as file:
+        with open(
+            path,
+            "r",
+            encoding="utf-8"
+        ) as file:
+
             return json.load(file)
 
     except Exception:
@@ -159,7 +188,12 @@ def load_json(path, default):
 def save_json(path, data):
     temp = path + ".tmp"
 
-    with open(temp, "w", encoding="utf-8") as file:
+    with open(
+        temp,
+        "w",
+        encoding="utf-8"
+    ) as file:
+
         json.dump(
             data,
             file,
@@ -167,23 +201,37 @@ def save_json(path, data):
             indent=2
         )
 
-    os.replace(temp, path)
+    os.replace(
+        temp,
+        path
+    )
 
 
 def get_users_json():
-    return load_json(USERS_FILE, {})
+    return load_json(
+        USERS_FILE,
+        {}
+    )
 
 
 def save_users_json(users):
-    save_json(USERS_FILE, users)
+    save_json(
+        USERS_FILE,
+        users
+    )
 
 
 def db_enabled():
-    return bool(DATABASE_URL and psycopg2)
+    return bool(
+        DATABASE_URL
+        and psycopg2
+    )
 
 
 def get_db():
-    return psycopg2.connect(DATABASE_URL)
+    return psycopg2.connect(
+        DATABASE_URL
+    )
 
 
 # ============================================================
@@ -210,11 +258,17 @@ def default_memory():
 
 
 def get_memories_json():
-    return load_json(MEMORY_FILE, {})
+    return load_json(
+        MEMORY_FILE,
+        {}
+    )
 
 
 def save_memories_json(memories):
-    save_json(MEMORY_FILE, memories)
+    save_json(
+        MEMORY_FILE,
+        memories
+    )
 
 
 # ============================================================
@@ -222,12 +276,14 @@ def save_memories_json(memories):
 # ============================================================
 
 def init_db():
+
     if not db_enabled():
         return
 
     conn = get_db()
 
     try:
+
         with conn.cursor() as cur:
 
             cur.execute("""
@@ -338,9 +394,11 @@ def init_db():
 
 
 try:
+
     init_db()
 
 except Exception as error:
+
     print(
         "Database initialization warning:",
         error
@@ -352,15 +410,20 @@ except Exception as error:
 # ============================================================
 
 def find_user_by_email(email):
-    email = normalize_email(email)
+
+    email = normalize_email(
+        email
+    )
 
     if not email:
         return None
 
     if db_enabled():
+
         conn = get_db()
 
         try:
+
             with conn.cursor(
                 cursor_factory=RealDictCursor
             ) as cur:
@@ -376,11 +439,18 @@ def find_user_by_email(email):
                     WHERE LOWER(email)=LOWER(%s)
                        OR LOWER(username)=LOWER(%s)
                     LIMIT 1
-                """, (email, email))
+                """, (
+                    email,
+                    email
+                ))
 
                 row = cur.fetchone()
 
-                return dict(row) if row else None
+                return (
+                    dict(row)
+                    if row
+                    else None
+                )
 
         finally:
             conn.close()
@@ -390,7 +460,10 @@ def find_user_by_email(email):
     for username, user in users.items():
 
         if normalize_email(
-            user.get("email", "")
+            user.get(
+                "email",
+                ""
+            )
         ) == email:
 
             return {
@@ -438,6 +511,7 @@ def find_user_by_email(email):
 
 
 def get_user_by_identity(identity):
+
     identity = safe_text(
         identity,
         254
@@ -447,13 +521,17 @@ def get_user_by_identity(identity):
         return None
 
     if "@" in identity:
-        return find_user_by_email(identity)
+
+        return find_user_by_email(
+            identity
+        )
 
     if db_enabled():
 
         conn = get_db()
 
         try:
+
             with conn.cursor(
                 cursor_factory=RealDictCursor
             ) as cur:
@@ -468,17 +546,26 @@ def get_user_by_identity(identity):
                     FROM users
                     WHERE LOWER(username)=LOWER(%s)
                     LIMIT 1
-                """, (identity,))
+                """, (
+                    identity,
+                ))
 
                 row = cur.fetchone()
 
-                return dict(row) if row else None
+                return (
+                    dict(row)
+                    if row
+                    else None
+                )
 
         finally:
             conn.close()
 
     users = get_users_json()
-    user = users.get(identity)
+
+    user = users.get(
+        identity
+    )
 
     if not user:
         return None
@@ -505,6 +592,7 @@ def get_user_by_identity(identity):
 
 
 def public_user(user):
+
     if not user:
         return None
 
@@ -525,6 +613,7 @@ def public_user(user):
 
 
 def get_request_user():
+
     data = request.get_json(
         silent=True
     ) or {}
@@ -538,16 +627,25 @@ def get_request_user():
         254
     )
 
-    user_data = data.get("user")
+    user_data = data.get(
+        "user"
+    )
 
-    if isinstance(user_data, dict):
+    if isinstance(
+        user_data,
+        dict
+    ):
 
         if not email:
+
             email = normalize_email(
-                user_data.get("email")
+                user_data.get(
+                    "email"
+                )
             )
 
         if not username:
+
             username = safe_text(
                 user_data.get(
                     "username"
@@ -579,11 +677,15 @@ def get_request_user():
 def get_query_user():
 
     email = normalize_email(
-        request.args.get("email")
+        request.args.get(
+            "email"
+        )
     )
 
     username = safe_text(
-        request.args.get("username"),
+        request.args.get(
+            "username"
+        ),
         254
     )
 
@@ -613,6 +715,7 @@ def get_query_user():
 # ============================================================
 
 def hash_reset_token(token):
+
     return hashlib.sha256(
         token.encode("utf-8")
     ).hexdigest()
@@ -620,7 +723,9 @@ def hash_reset_token(token):
 
 def create_reset_token(username):
 
-    token = secrets.token_urlsafe(48)
+    token = secrets.token_urlsafe(
+        48
+    )
 
     token_hash = hash_reset_token(
         token
@@ -629,7 +734,9 @@ def create_reset_token(username):
     created_at = now_iso()
 
     expires_at = (
-        datetime.now(timezone.utc)
+        datetime.now(
+            timezone.utc
+        )
         + timedelta(
             minutes=RESET_TOKEN_MINUTES
         )
@@ -640,13 +747,15 @@ def create_reset_token(username):
         conn = get_db()
 
         try:
+
             with conn.cursor() as cur:
 
-                # Remove old unused tokens
                 cur.execute("""
                     DELETE FROM password_reset_tokens
                     WHERE username=%s
-                """, (username,))
+                """, (
+                    username,
+                ))
 
                 cur.execute("""
                     INSERT INTO password_reset_tokens(
@@ -699,6 +808,10 @@ def create_reset_token(username):
     return token
 
 
+# ============================================================
+# RESEND PASSWORD RESET EMAIL
+# ============================================================
+
 def send_reset_email(
     email,
     name,
@@ -712,34 +825,36 @@ def send_reset_email(
     )
 
     if not (
-        SMTP_HOST
-        and SMTP_USERNAME
-        and SMTP_PASSWORD
-        and SMTP_FROM
+        RESEND_API_KEY
+        and RESEND_FROM
     ):
+
         print(
             "PASSWORD RESET EMAIL NOT CONFIGURED."
         )
+
         print(
             "Reset URL:",
             reset_url
         )
+
         return False
 
-    message = EmailMessage()
+    safe_name = html.escape(
+        name or "there"
+    )
 
-    message["Subject"] = (
+    safe_reset_url = html.escape(
+        reset_url,
+        quote=True
+    )
+
+    subject = (
         "Reset your NEXORA AI password"
     )
 
-    message["From"] = SMTP_FROM
-    message["To"] = email
-
-    safe_name = name or "there"
-
-    message.set_content(
-        f"""
-Hello {safe_name},
+    text_body = f"""
+Hello {name or "there"},
 
 We received a request to reset your NEXORA AI password.
 
@@ -755,28 +870,207 @@ If you did not request this, you can safely ignore this email.
 NEXORA AI
 DAVIDS DIGITALS LTD.©
 """.strip()
+
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>NEXORA AI Password Reset</title>
+</head>
+
+<body style="
+    margin:0;
+    padding:0;
+    background:#05070d;
+    font-family:Arial,Helvetica,sans-serif;
+">
+
+    <div style="
+        max-width:600px;
+        margin:40px auto;
+        background:#0b101a;
+        border:1px solid #1c2a3a;
+        border-radius:18px;
+        padding:35px;
+        color:#ffffff;
+    ">
+
+        <h1 style="
+            margin:0 0 20px;
+            color:#36d9ff;
+            font-size:28px;
+        ">
+            NEXORA AI
+        </h1>
+
+        <h2 style="
+            color:#ffffff;
+            margin-bottom:15px;
+        ">
+            Password Reset
+        </h2>
+
+        <p style="
+            color:#cbd5e1;
+            line-height:1.7;
+        ">
+            Hello {safe_name},
+        </p>
+
+        <p style="
+            color:#cbd5e1;
+            line-height:1.7;
+        ">
+            We received a request to reset your NEXORA AI password.
+        </p>
+
+        <p style="
+            color:#cbd5e1;
+            line-height:1.7;
+        ">
+            Click the button below to create a new password.
+        </p>
+
+        <div style="
+            margin:30px 0;
+            text-align:center;
+        ">
+
+            <a
+                href="{safe_reset_url}"
+                style="
+                    display:inline-block;
+                    padding:14px 25px;
+                    background:#36d9ff;
+                    color:#001018;
+                    text-decoration:none;
+                    border-radius:10px;
+                    font-weight:bold;
+                "
+            >
+                Reset Password
+            </a>
+
+        </div>
+
+        <p style="
+            color:#94a3b8;
+            line-height:1.6;
+            font-size:14px;
+        ">
+            This reset link expires in
+            {RESET_TOKEN_MINUTES} minutes
+            and can only be used once.
+        </p>
+
+        <p style="
+            color:#94a3b8;
+            line-height:1.6;
+            font-size:14px;
+        ">
+            If you did not request this password reset,
+            you can safely ignore this email.
+        </p>
+
+        <hr style="
+            border:0;
+            border-top:1px solid #1c2a3a;
+            margin:30px 0;
+        ">
+
+        <p style="
+            color:#64748b;
+            font-size:13px;
+            text-align:center;
+        ">
+            NEXORA AI<br>
+            DAVIDS DIGITALS LTD.©
+        </p>
+
+    </div>
+
+</body>
+</html>
+""".strip()
+
+    payload = {
+        "from": RESEND_FROM,
+        "to": [email],
+        "subject": subject,
+        "text": text_body,
+        "html": html_body,
+        "tags": [
+            {
+                "name": "category",
+                "value": "password_reset"
+            }
+        ]
+    }
+
+    body = json.dumps(
+        payload
+    ).encode("utf-8")
+
+    req = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=body,
+        method="POST"
+    )
+
+    req.add_header(
+        "Authorization",
+        f"Bearer {RESEND_API_KEY}"
+    )
+
+    req.add_header(
+        "Content-Type",
+        "application/json"
+    )
+
+    req.add_header(
+        "Accept",
+        "application/json"
     )
 
     try:
 
-        with smtplib.SMTP(
-            SMTP_HOST,
-            SMTP_PORT,
+        with urllib.request.urlopen(
+            req,
             timeout=20
-        ) as server:
+        ) as response:
 
-            server.starttls()
-
-            server.login(
-                SMTP_USERNAME,
-                SMTP_PASSWORD
+            response_body = response.read().decode(
+                "utf-8",
+                errors="replace"
             )
 
-            server.send_message(
-                message
+            print(
+                "Password reset email sent:",
+                response_body
             )
 
-        return True
+            return True
+
+    except urllib.error.HTTPError as error:
+
+        error_body = ""
+
+        try:
+            error_body = error.read().decode(
+                "utf-8",
+                errors="replace"
+            )
+        except Exception:
+            pass
+
+        print(
+            "Resend email HTTP error:",
+            error.code,
+            error_body
+        )
+
+        return False
 
     except Exception as error:
 
@@ -827,7 +1121,9 @@ def verify_and_consume_reset_token(
                     FROM password_reset_tokens
                     WHERE token_hash=%s
                     LIMIT 1
-                """, (token_hash,))
+                """, (
+                    token_hash,
+                ))
 
                 row = cur.fetchone()
 
@@ -838,16 +1134,19 @@ def verify_and_consume_reset_token(
                     return None
 
                 try:
+
                     expires = datetime.fromisoformat(
                         row["expires_at"]
                     )
 
                     if expires.tzinfo is None:
+
                         expires = expires.replace(
                             tzinfo=timezone.utc
                         )
 
                 except Exception:
+
                     return None
 
                 if expires <= current_time:
@@ -871,6 +1170,7 @@ def verify_and_consume_reset_token(
         if item.get(
             "token_hash"
         ) != token_hash:
+
             continue
 
         if item.get("used_at"):
@@ -879,15 +1179,20 @@ def verify_and_consume_reset_token(
         try:
 
             expires = datetime.fromisoformat(
-                item.get("expires_at", "")
+                item.get(
+                    "expires_at",
+                    ""
+                )
             )
 
             if expires.tzinfo is None:
+
                 expires = expires.replace(
                     tzinfo=timezone.utc
                 )
 
         except Exception:
+
             return None
 
         if expires <= current_time:
@@ -976,7 +1281,6 @@ def update_password_for_user(
                     username
                 ))
 
-                # Invalidate all reset tokens
                 cur.execute("""
                     UPDATE password_reset_tokens
                     SET used_at=%s
@@ -1003,7 +1307,9 @@ def update_password_for_user(
         "password_hash"
     ] = password_hash
 
-    save_users_json(users)
+    save_users_json(
+        users
+    )
 
     tokens = load_json(
         RESET_FILE,
@@ -1051,7 +1357,9 @@ def get_user_memory(username):
                     SELECT memory
                     FROM user_memory
                     WHERE username=%s
-                """, (username,))
+                """, (
+                    username,
+                ))
 
                 row = cur.fetchone()
 
@@ -1065,6 +1373,7 @@ def get_user_memory(username):
                         memory,
                         dict
                     ):
+
                         memory = default_memory()
 
                     return memory
@@ -1118,6 +1427,7 @@ def get_user_memory(username):
     for key, value in defaults.items():
 
         if key not in memory:
+
             memory[key] = value
 
     save_memories_json(
@@ -1232,7 +1542,9 @@ def get_conversations(username):
                     FROM conversations
                     WHERE username=%s
                     ORDER BY updated_at DESC
-                """, (username,))
+                """, (
+                    username,
+                ))
 
                 rows = cur.fetchall()
 
@@ -1363,6 +1675,7 @@ def create_conversation(
 ):
 
     conversation_id = new_id()
+
     timestamp = now_iso()
 
     title = safe_text(
@@ -1621,7 +1934,10 @@ def add_message(
         []
     ):
 
-        if item.get("id") != conversation_id:
+        if item.get(
+            "id"
+        ) != conversation_id:
+
             continue
 
         item.setdefault(
@@ -1768,6 +2084,7 @@ def update_conversation_title(
         ) == conversation_id:
 
             item["title"] = title
+
             item[
                 "updated_at"
             ] = timestamp
@@ -1874,6 +2191,7 @@ def save_context(
         )
 
         if possible not in saved:
+
             saved.append(
                 possible
             )
@@ -1975,6 +2293,7 @@ def detect_topic(message):
             word in text
             for word in words
         ):
+
             return topic
 
     return "general"
@@ -2030,6 +2349,7 @@ def detect_subject(message):
             word in text
             for word in words
         ):
+
             return subject
 
     return ""
@@ -2058,6 +2378,7 @@ def build_system_prompt(
     )
 
     if not memory_text:
+
         memory_text = (
             "- No saved personal memories yet."
         )
@@ -2140,6 +2461,7 @@ def generate_openai_response(
             "user",
             "assistant"
         ):
+
             continue
 
         if content:
@@ -2339,18 +2661,21 @@ def signup():
     )
 
     if not name:
+
         return jsonify({
             "success": False,
             "message": "Name is required."
         }), 400
 
     if not email:
+
         return jsonify({
             "success": False,
             "message": "Email is required."
         }), 400
 
     if "@" not in email:
+
         return jsonify({
             "success": False,
             "message": (
@@ -2359,6 +2684,7 @@ def signup():
         }), 400
 
     if len(password) < 6:
+
         return jsonify({
             "success": False,
             "message": (
@@ -2367,6 +2693,7 @@ def signup():
         }), 400
 
     if find_user_by_email(email):
+
         return jsonify({
             "success": False,
             "message": (
@@ -2511,12 +2838,14 @@ def login():
         email = username
 
     if not email:
+
         return jsonify({
             "success": False,
             "message": "Email is required."
         }), 400
 
     if not password:
+
         return jsonify({
             "success": False,
             "message": "Password is required."
@@ -2527,11 +2856,13 @@ def login():
     )
 
     if not user:
+
         user = get_user_by_identity(
             email
         )
 
     if not user:
+
         return jsonify({
             "success": False,
             "message": (
@@ -2603,6 +2934,7 @@ def login():
         )
 
     if not valid:
+
         return jsonify({
             "success": False,
             "message": (
@@ -2636,15 +2968,13 @@ def forgot_password():
         data.get("email")
     )
 
-    # Always return the same message.
-    # This prevents people from discovering
-    # which emails have NEXORA accounts.
     generic_message = (
         "If an account exists for that email, "
         "a password reset link has been sent."
     )
 
     if not email:
+
         return jsonify({
             "success": False,
             "message": "Email is required."
@@ -2666,8 +2996,14 @@ def forgot_password():
     )
 
     sent = send_reset_email(
-        user.get("email", email),
-        user.get("name", ""),
+        user.get(
+            "email",
+            email
+        ),
+        user.get(
+            "name",
+            ""
+        ),
         token
     )
 
@@ -3352,7 +3688,9 @@ def clear_chat():
     ) or {}
 
     conversation_id = safe_text(
-        data.get("conversation_id"),
+        data.get(
+            "conversation_id"
+        ),
         100
     )
 
@@ -3493,11 +3831,11 @@ def status():
             db_enabled(),
         "password_reset_email":
             bool(
-                SMTP_HOST
-                and SMTP_USERNAME
-                and SMTP_PASSWORD
-                and SMTP_FROM
+                RESEND_API_KEY
+                and RESEND_FROM
             ),
+        "email_provider":
+            "resend",
         "features": {
             "email_authentication": True,
             "password_reset": True,
