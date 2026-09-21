@@ -1,18 +1,20 @@
 /* =========================================================
    NEXORA AI
-   MAIN JAVASCRIPT
+   MAIN JAVASCRIPT — VERSION 12
    ========================================================= */
 
 const API_URL = "https://nexora-ai-9jgj.onrender.com";
 
 
 /* =========================================================
-   SPLASH SCREEN
+   SPLASH
    ========================================================= */
 
-const splashScreen = document.getElementById("splashScreen");
+const splashScreen =
+    document.getElementById("splashScreen");
 
 if (splashScreen) {
+
     window.addEventListener("load", () => {
 
         setTimeout(() => {
@@ -26,46 +28,75 @@ if (splashScreen) {
         }, 2200);
 
     });
+
 }
 
 
 /* =========================================================
-   AUTH ELEMENTS
+   AUTH
    ========================================================= */
 
-const authScreen = document.getElementById("authScreen");
-const appScreen = document.getElementById("app");
+const authScreen =
+    document.getElementById("authScreen");
 
-const loginScreen = document.getElementById("loginScreen");
-const signupScreen = document.getElementById("signupScreen");
+const appScreen =
+    document.getElementById("app");
 
-const loginEmail = document.getElementById("loginEmail");
-const loginPassword = document.getElementById("loginPassword");
+const loginScreen =
+    document.getElementById("loginScreen");
 
-const signupName = document.getElementById("signupName");
-const signupEmail = document.getElementById("signupEmail");
-const signupPassword = document.getElementById("signupPassword");
+const signupScreen =
+    document.getElementById("signupScreen");
 
-const loginBtn = document.getElementById("loginBtn");
-const signupBtn = document.getElementById("signupBtn");
+const loginEmail =
+    document.getElementById("loginEmail");
 
-const showSignup = document.getElementById("showSignup");
-const showLogin = document.getElementById("showLogin");
+const loginPassword =
+    document.getElementById("loginPassword");
 
-const authMessage = document.getElementById("authMessage");
+const signupName =
+    document.getElementById("signupName");
+
+const signupEmail =
+    document.getElementById("signupEmail");
+
+const signupPassword =
+    document.getElementById("signupPassword");
+
+const loginBtn =
+    document.getElementById("loginBtn");
+
+const signupBtn =
+    document.getElementById("signupBtn");
+
+const showSignup =
+    document.getElementById("showSignup");
+
+const showLogin =
+    document.getElementById("showLogin");
+
+const authMessage =
+    document.getElementById("authMessage");
 
 
 /* =========================================================
    APP ELEMENTS
    ========================================================= */
 
-const menuBtn = document.getElementById("menuBtn");
-const closeDrawer = document.getElementById("closeDrawer");
+const menuBtn =
+    document.getElementById("menuBtn");
 
-const drawer = document.getElementById("drawer");
-const drawerOverlay = document.getElementById("drawerOverlay");
+const closeDrawer =
+    document.getElementById("closeDrawer");
 
-const newChatBtn = document.getElementById("newChatBtn");
+const drawer =
+    document.getElementById("drawer");
+
+const drawerOverlay =
+    document.getElementById("drawerOverlay");
+
+const newChatBtn =
+    document.getElementById("newChatBtn");
 
 const conversationList =
     document.getElementById("conversationList");
@@ -87,7 +118,7 @@ const voiceBtn =
 
 
 /* =========================================================
-   PROFILE ELEMENTS
+   PROFILE
    ========================================================= */
 
 const profileBtn =
@@ -116,7 +147,7 @@ const saveProfileBtn =
 
 
 /* =========================================================
-   MEMORY ELEMENTS
+   MEMORY
    ========================================================= */
 
 const memoryBtn =
@@ -136,7 +167,59 @@ const clearMemoryBtn =
 
 
 /* =========================================================
-   CONFIRMATION ELEMENTS
+   RENAME
+   ========================================================= */
+
+const renameModal =
+    document.getElementById("renameModal");
+
+const closeRenameModal =
+    document.getElementById("closeRenameModal");
+
+const renameConversationInput =
+    document.getElementById(
+        "renameConversationInput"
+    );
+
+const saveConversationNameBtn =
+    document.getElementById(
+        "saveConversationNameBtn"
+    );
+
+
+let conversationBeingRenamed = null;
+
+
+/* =========================================================
+   SWITCH ACCOUNT
+   ========================================================= */
+
+const switchAccountBtn =
+    document.getElementById(
+        "switchAccountBtn"
+    );
+
+const accountModal =
+    document.getElementById("accountModal");
+
+const closeAccountModal =
+    document.getElementById(
+        "closeAccountModal"
+    );
+
+const accountLoginBtn =
+    document.getElementById(
+        "accountLoginBtn"
+    );
+
+const accountSignupBtn =
+    document.getElementById(
+        "accountSignupBtn"
+    );
+
+
+/* =========================================================
+   CONFIRMATION
    ========================================================= */
 
 const confirmModal =
@@ -167,6 +250,32 @@ let isSending = false;
 
 
 /* =========================================================
+   USER-SPECIFIC STORAGE
+   ========================================================= */
+
+function getUserStorageKey() {
+
+    if (!currentUser) {
+        return "guest";
+    }
+
+    const email =
+        currentUser.email ||
+        "unknown";
+
+    return email
+        .toLowerCase()
+        .replace(/[^a-z0-9@._-]/g, "_");
+}
+
+
+function getConversationStorageKey() {
+
+    return `nexora_conversations_${getUserStorageKey()}`;
+}
+
+
+/* =========================================================
    LOCAL STORAGE
    ========================================================= */
 
@@ -180,9 +289,91 @@ function saveLocalData() {
     );
 
     localStorage.setItem(
+        getConversationStorageKey(),
+        JSON.stringify(conversations)
+    );
+
+    /*
+       Keep the old key too so existing users do not
+       immediately lose their old conversations.
+    */
+
+    localStorage.setItem(
         "nexora_conversations",
         JSON.stringify(conversations)
     );
+}
+
+
+function loadUserConversations() {
+
+    if (!currentUser) {
+        conversations = [];
+        return;
+    }
+
+    try {
+
+        const userKey =
+            getConversationStorageKey();
+
+        const saved =
+            localStorage.getItem(userKey);
+
+        if (saved) {
+
+            conversations =
+                JSON.parse(saved);
+
+            if (!Array.isArray(conversations)) {
+                conversations = [];
+            }
+
+            return;
+        }
+
+        /*
+           Migration for the old single-account storage.
+        */
+
+        const oldSaved =
+            localStorage.getItem(
+                "nexora_conversations"
+            );
+
+        if (oldSaved) {
+
+            const oldConversations =
+                JSON.parse(oldSaved);
+
+            if (
+                Array.isArray(oldConversations) &&
+                oldConversations.length
+            ) {
+
+                conversations =
+                    oldConversations;
+
+                localStorage.setItem(
+                    userKey,
+                    JSON.stringify(conversations)
+                );
+
+                return;
+            }
+        }
+
+        conversations = [];
+
+    } catch (error) {
+
+        console.error(
+            "Conversation storage error:",
+            error
+        );
+
+        conversations = [];
+    }
 }
 
 
@@ -191,18 +382,22 @@ function loadLocalData() {
     try {
 
         const savedUser =
-            localStorage.getItem("nexora_current_user");
-
-        const savedConversations =
-            localStorage.getItem("nexora_conversations");
+            localStorage.getItem(
+                "nexora_current_user"
+            );
 
         if (savedUser) {
-            currentUser = JSON.parse(savedUser);
-        }
 
-        if (savedConversations) {
-            conversations =
-                JSON.parse(savedConversations);
+            currentUser =
+                JSON.parse(savedUser);
+
+            loadUserConversations();
+
+        } else {
+
+            currentUser = null;
+            conversations = [];
+
         }
 
     } catch (error) {
@@ -212,12 +407,14 @@ function loadLocalData() {
             error
         );
 
+        currentUser = null;
+        conversations = [];
     }
 }
 
 
 /* =========================================================
-   AUTH SCREEN SWITCHING
+   AUTH UI
    ========================================================= */
 
 function showLoginForm() {
@@ -265,7 +462,7 @@ function showAuthMessage(message) {
 
 
 /* =========================================================
-   AUTH API
+   LOGIN
    ========================================================= */
 
 async function loginUser() {
@@ -290,23 +487,26 @@ async function loginUser() {
 
     try {
 
-        const response = await fetch(
-            `${API_URL}/login`,
-            {
-                method: "POST",
+        const response =
+            await fetch(
+                `${API_URL}/login`,
+                {
+                    method: "POST",
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-                body: JSON.stringify({
-                    email,
-                    password
-                })
-            }
-        );
+                    body: JSON.stringify({
+                        email,
+                        password
+                    })
+                }
+            );
 
-        const data = await response.json();
+        const data =
+            await response.json();
 
         if (!response.ok) {
 
@@ -317,9 +517,14 @@ async function loginUser() {
             );
         }
 
-        currentUser = data.user || {
-            email
-        };
+        currentUser =
+            data.user || {
+                email
+            };
+
+        loadUserConversations();
+
+        currentConversation = null;
 
         saveLocalData();
 
@@ -341,6 +546,10 @@ async function loginUser() {
     }
 }
 
+
+/* =========================================================
+   SIGNUP
+   ========================================================= */
 
 async function signupUser() {
 
@@ -372,28 +581,32 @@ async function signupUser() {
     }
 
     signupBtn.disabled = true;
-    signupBtn.textContent = "Creating account...";
+    signupBtn.textContent =
+        "Creating account...";
 
     try {
 
-        const response = await fetch(
-            `${API_URL}/signup`,
-            {
-                method: "POST",
+        const response =
+            await fetch(
+                `${API_URL}/signup`,
+                {
+                    method: "POST",
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-                body: JSON.stringify({
-                    name,
-                    email,
-                    password
-                })
-            }
-        );
+                    body: JSON.stringify({
+                        name,
+                        email,
+                        password
+                    })
+                }
+            );
 
-        const data = await response.json();
+        const data =
+            await response.json();
 
         if (!response.ok) {
 
@@ -404,10 +617,14 @@ async function signupUser() {
             );
         }
 
-        currentUser = data.user || {
-            name,
-            email
-        };
+        currentUser =
+            data.user || {
+                name,
+                email
+            };
+
+        conversations = [];
+        currentConversation = null;
 
         saveLocalData();
 
@@ -431,7 +648,7 @@ async function signupUser() {
 
 
 /* =========================================================
-   OPEN / CLOSE APP
+   OPEN APP
    ========================================================= */
 
 function openApp() {
@@ -449,16 +666,39 @@ function openApp() {
     renderConversations();
 
     if (!currentConversation) {
-        createNewConversation();
-    }
 
+        if (conversations.length) {
+
+            currentConversation =
+                conversations[0];
+
+            renderMessages();
+
+        } else {
+
+            createNewConversation();
+
+        }
+
+    } else {
+
+        renderMessages();
+
+    }
 }
 
 
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
 function logoutUser() {
+
+    saveLocalData();
 
     currentUser = null;
     currentConversation = null;
+    conversations = [];
 
     localStorage.removeItem(
         "nexora_current_user"
@@ -473,6 +713,117 @@ function logoutUser() {
     }
 
     showLoginForm();
+
+    if (loginEmail) {
+        loginEmail.value = "";
+    }
+
+    if (loginPassword) {
+        loginPassword.value = "";
+    }
+
+    closeAllModals();
+}
+
+
+/* =========================================================
+   SWITCH ACCOUNT
+   ========================================================= */
+
+function openAccountSwitcher() {
+
+    closeDrawerMenu();
+
+    if (accountModal) {
+        accountModal.style.display = "flex";
+    }
+}
+
+
+function closeAccountSwitcher() {
+
+    if (accountModal) {
+        accountModal.style.display = "none";
+    }
+}
+
+
+function switchToLoginAccount() {
+
+    saveLocalData();
+
+    closeAccountSwitcher();
+
+    currentUser = null;
+    currentConversation = null;
+    conversations = [];
+
+    localStorage.removeItem(
+        "nexora_current_user"
+    );
+
+    if (appScreen) {
+        appScreen.style.display = "none";
+    }
+
+    if (authScreen) {
+        authScreen.style.display = "flex";
+    }
+
+    showLoginForm();
+
+    if (loginEmail) {
+        loginEmail.value = "";
+    }
+
+    if (loginPassword) {
+        loginPassword.value = "";
+    }
+
+    if (loginEmail) {
+        setTimeout(() => {
+            loginEmail.focus();
+        }, 100);
+    }
+}
+
+
+function switchToSignupAccount() {
+
+    saveLocalData();
+
+    closeAccountSwitcher();
+
+    currentUser = null;
+    currentConversation = null;
+    conversations = [];
+
+    localStorage.removeItem(
+        "nexora_current_user"
+    );
+
+    if (appScreen) {
+        appScreen.style.display = "none";
+    }
+
+    if (authScreen) {
+        authScreen.style.display = "flex";
+    }
+
+    showSignupForm();
+
+    if (signupName) {
+        signupName.value = "";
+    }
+
+    if (signupEmail) {
+        signupEmail.value = "";
+    }
+
+    if (signupPassword) {
+        signupPassword.value = "";
+    }
+
 }
 
 
@@ -497,7 +848,9 @@ function createNewConversation() {
 
     };
 
-    conversations.unshift(conversation);
+    conversations.unshift(
+        conversation
+    );
 
     currentConversation =
         conversation;
@@ -530,36 +883,126 @@ function loadConversation(id) {
 }
 
 
+/* =========================================================
+   CONVERSATION RENDER
+   ========================================================= */
+
 function renderConversations() {
 
     if (!conversationList) return;
 
     conversationList.innerHTML = "";
 
+    if (!conversations.length) {
+
+        const empty =
+            document.createElement("div");
+
+        empty.className =
+            "conversation-empty";
+
+        empty.textContent =
+            "No conversations yet.";
+
+        conversationList.appendChild(
+            empty
+        );
+
+        return;
+    }
+
     conversations.forEach(
         conversation => {
+
+            const item =
+                document.createElement("div");
+
+            item.className =
+                "conversation-item";
+
+            if (
+                currentConversation &&
+                currentConversation.id ===
+                    conversation.id
+            ) {
+
+                item.classList.add("active");
+            }
+
 
             const button =
                 document.createElement("button");
 
             button.className =
-                "drawer-option";
+                "conversation-button";
 
-            button.textContent =
+            button.title =
                 conversation.title ||
                 "New conversation";
+
+            const title =
+                document.createElement("span");
+
+            title.className =
+                "conversation-title";
+
+            title.textContent =
+                conversation.title ||
+                "New conversation";
+
+
+            const renameButton =
+                document.createElement("button");
+
+            renameButton.className =
+                "conversation-rename";
+
+            renameButton.type =
+                "button";
+
+            renameButton.title =
+                "Rename conversation";
+
+            renameButton.textContent =
+                "✏️";
+
 
             button.addEventListener(
                 "click",
                 () => {
+
                     loadConversation(
                         conversation.id
                     );
+
                 }
             );
 
+
+            renameButton.addEventListener(
+                "click",
+                event => {
+
+                    event.stopPropagation();
+
+                    openRenameConversation(
+                        conversation.id
+                    );
+
+                }
+            );
+
+
+            item.appendChild(button);
+
+            button.appendChild(title);
+
+            item.appendChild(
+                renameButton
+            );
+
             conversationList.appendChild(
-                button
+                item
             );
 
         }
@@ -568,7 +1011,76 @@ function renderConversations() {
 
 
 /* =========================================================
-   CHAT RENDERING
+   RENAME CONVERSATION
+   ========================================================= */
+
+function openRenameConversation(id) {
+
+    const conversation =
+        conversations.find(
+            item => item.id === id
+        );
+
+    if (!conversation) return;
+
+    conversationBeingRenamed =
+        conversation;
+
+    if (renameConversationInput) {
+
+        renameConversationInput.value =
+            conversation.title ||
+            "";
+
+        renameConversationInput.focus();
+
+        renameConversationInput.select();
+    }
+
+    if (renameModal) {
+        renameModal.style.display =
+            "flex";
+    }
+}
+
+
+function closeRenameConversation() {
+
+    conversationBeingRenamed = null;
+
+    if (renameModal) {
+        renameModal.style.display =
+            "none";
+    }
+}
+
+
+function saveConversationName() {
+
+    if (!conversationBeingRenamed) {
+        return;
+    }
+
+    const newName =
+        renameConversationInput?.value.trim();
+
+    if (!newName) {
+        return;
+    }
+
+    conversationBeingRenamed.title =
+        newName.substring(0, 80);
+
+    saveLocalData();
+
+    renderConversations();
+
+    closeRenameConversation();
+}
+
+
+/* =========================================================
+   CHAT
    ========================================================= */
 
 function renderMessages() {
@@ -579,6 +1091,9 @@ function renderMessages() {
 
     if (
         !currentConversation ||
+        !Array.isArray(
+            currentConversation.messages
+        ) ||
         !currentConversation.messages.length
     ) {
 
@@ -617,7 +1132,12 @@ function addMessageToUI(
         document.createElement("div");
 
     wrapper.className =
-        `message ${role === "user" ? "user" : "assistant"}`;
+        `message ${
+            role === "user"
+                ? "user"
+                : "assistant"
+        }`;
+
 
     const avatar =
         document.createElement("div");
@@ -630,6 +1150,7 @@ function addMessageToUI(
             ? getUserInitial()
             : "N";
 
+
     const contentBox =
         document.createElement("div");
 
@@ -638,6 +1159,7 @@ function addMessageToUI(
 
     contentBox.textContent =
         content;
+
 
     if (role === "user") {
 
@@ -658,7 +1180,9 @@ function addMessageToUI(
         wrapper.appendChild(
             contentBox
         );
+
     }
+
 
     messages.appendChild(
         wrapper
@@ -667,6 +1191,10 @@ function addMessageToUI(
     scrollToBottom();
 }
 
+
+/* =========================================================
+   SCROLL
+   ========================================================= */
 
 function scrollToBottom() {
 
@@ -679,8 +1207,12 @@ function scrollToBottom() {
 
     if (container) {
 
-        container.scrollTop =
-            container.scrollHeight;
+        requestAnimationFrame(() => {
+
+            container.scrollTop =
+                container.scrollHeight;
+
+        });
 
     }
 }
@@ -707,13 +1239,20 @@ async function sendMessage() {
 
     messageInput.value = "";
 
+    messageInput.style.height =
+        "auto";
+
     if (welcomeScreen) {
-        welcomeScreen.style.display = "none";
+        welcomeScreen.style.display =
+            "none";
     }
 
     currentConversation.messages.push({
+
         role: "user",
+
         content: text
+
     });
 
     updateConversationTitle(text);
@@ -727,35 +1266,41 @@ async function sendMessage() {
 
     showTypingIndicator();
 
+
     try {
 
-        const response = await fetch(
-            `${API_URL}/chat`,
-            {
-                method: "POST",
+        const response =
+            await fetch(
+                `${API_URL}/chat`,
+                {
+                    method: "POST",
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-                body: JSON.stringify({
+                    body: JSON.stringify({
 
-                    message: text,
+                        message: text,
 
-                    user:
-                        currentUser || {},
+                        user:
+                            currentUser || {},
 
-                    conversation_id:
-                        currentConversation.id
+                        conversation_id:
+                            currentConversation.id
 
-                })
-            }
-        );
+                    })
+                }
+            );
+
 
         const data =
             await response.json();
 
+
         removeTypingIndicator();
+
 
         if (!response.ok) {
 
@@ -764,7 +1309,9 @@ async function sendMessage() {
                 data.error ||
                 "NEXORA could not respond."
             );
+
         }
+
 
         const reply =
             data.response ||
@@ -772,17 +1319,24 @@ async function sendMessage() {
             data.message ||
             "I couldn't generate a response.";
 
+
         currentConversation.messages.push({
+
             role: "assistant",
+
             content: reply
+
         });
+
 
         addMessageToUI(
             "assistant",
             reply
         );
 
+
         saveLocalData();
+
 
     } catch (error) {
 
@@ -790,20 +1344,28 @@ async function sendMessage() {
 
         removeTypingIndicator();
 
+
         const errorMessage =
             "Sorry, I couldn't connect to NEXORA right now.";
 
+
         currentConversation.messages.push({
+
             role: "assistant",
+
             content: errorMessage
+
         });
+
 
         addMessageToUI(
             "assistant",
             errorMessage
         );
 
+
         saveLocalData();
+
 
     } finally {
 
@@ -814,7 +1376,7 @@ async function sendMessage() {
 
 
 /* =========================================================
-   CONVERSATION TITLE
+   AUTO TITLE
    ========================================================= */
 
 function updateConversationTitle(text) {
@@ -842,7 +1404,7 @@ function updateConversationTitle(text) {
 
 
 /* =========================================================
-   TYPING INDICATOR
+   TYPING
    ========================================================= */
 
 function showTypingIndicator() {
@@ -862,7 +1424,9 @@ function showTypingIndicator() {
 
     typing.innerHTML = `
         <div class="message-avatar">N</div>
-        <div class="message-content">NEXORA is thinking...</div>
+        <div class="message-content">
+            NEXORA is thinking...
+        </div>
     `;
 
     messages.appendChild(
@@ -936,21 +1500,18 @@ function updateProfileUI() {
     if (!currentUser) return;
 
     const name =
-        currentUser.name ||
-        "";
+        currentUser.name || "";
 
     const email =
-        currentUser.email ||
-        "";
+        currentUser.email || "";
+
 
     if (profileName) {
-        profileName.value =
-            name;
+        profileName.value = name;
     }
 
     if (profileEmail) {
-        profileEmail.value =
-            email;
+        profileEmail.value = email;
     }
 
     if (profileInitial) {
@@ -989,17 +1550,16 @@ function saveProfile() {
     const name =
         profileName?.value.trim();
 
-    if (name) {
+    if (!name) return;
 
-        currentUser.name =
-            name;
+    currentUser.name =
+        name;
 
-        saveLocalData();
+    saveLocalData();
 
-        updateProfileUI();
+    updateProfileUI();
 
-        closeProfile();
-    }
+    closeProfile();
 }
 
 
@@ -1020,6 +1580,7 @@ function openMemory() {
 
         memoryContent.textContent =
             "NEXORA's memory is connected to your account and conversation history.";
+
     }
 }
 
@@ -1034,6 +1595,10 @@ function closeMemory() {
 
 
 function clearMemory() {
+
+    localStorage.removeItem(
+        getConversationStorageKey()
+    );
 
     localStorage.removeItem(
         "nexora_conversations"
@@ -1070,33 +1635,61 @@ function showConfirmation(
     confirmModal.style.display =
         "flex";
 
+
     confirmOkay.onclick = () => {
 
         confirmModal.style.display =
             "none";
 
         callback();
+
     };
+
 
     confirmCancel.onclick = () => {
 
         confirmModal.style.display =
             "none";
+
     };
+
 }
 
 
 /* =========================================================
-   VOICE INPUT
+   MODAL CLOSE
+   ========================================================= */
+
+function closeAllModals() {
+
+    closeProfile();
+
+    closeMemory();
+
+    closeRenameConversation();
+
+    closeAccountSwitcher();
+
+    if (confirmModal) {
+        confirmModal.style.display =
+            "none";
+    }
+}
+
+
+/* =========================================================
+   VOICE
    ========================================================= */
 
 let recognition = null;
+
 
 function setupVoiceRecognition() {
 
     const SpeechRecognition =
         window.SpeechRecognition ||
         window.webkitSpeechRecognition;
+
 
     if (!SpeechRecognition) {
 
@@ -1108,8 +1701,10 @@ function setupVoiceRecognition() {
         return;
     }
 
+
     recognition =
         new SpeechRecognition();
+
 
     recognition.lang =
         "en-US";
@@ -1120,19 +1715,26 @@ function setupVoiceRecognition() {
     recognition.continuous =
         false;
 
+
     recognition.onresult =
         event => {
 
             const transcript =
-                event.results[0][0].transcript;
+                event.results[0][0]
+                    .transcript;
+
 
             if (messageInput) {
+
                 messageInput.value =
                     transcript;
 
                 messageInput.focus();
+
             }
+
         };
+
 
     recognition.onerror =
         error => {
@@ -1141,7 +1743,9 @@ function setupVoiceRecognition() {
                 "Voice recognition:",
                 error
             );
+
         };
+
 }
 
 
@@ -1154,13 +1758,19 @@ function startVoiceInput() {
     if (recognition) {
 
         try {
+
             recognition.start();
+
         } catch (error) {
+
             console.log(
                 "Voice already active."
             );
+
         }
+
     }
+
 }
 
 
@@ -1174,6 +1784,7 @@ function setupSuggestions() {
         document.querySelectorAll(
             ".suggestion"
         );
+
 
     suggestions.forEach(
         suggestion => {
@@ -1196,6 +1807,7 @@ function setupSuggestions() {
 
         }
     );
+
 }
 
 
@@ -1209,6 +1821,7 @@ if (loginBtn) {
         "click",
         loginUser
     );
+
 }
 
 
@@ -1218,6 +1831,7 @@ if (signupBtn) {
         "click",
         signupUser
     );
+
 }
 
 
@@ -1227,6 +1841,7 @@ if (showSignup) {
         "click",
         showSignupForm
     );
+
 }
 
 
@@ -1236,6 +1851,7 @@ if (showLogin) {
         "click",
         showLoginForm
     );
+
 }
 
 
@@ -1251,6 +1867,7 @@ if (loginPassword) {
 
         }
     );
+
 }
 
 
@@ -1266,6 +1883,7 @@ if (signupPassword) {
 
         }
     );
+
 }
 
 
@@ -1275,6 +1893,7 @@ if (sendBtn) {
         "click",
         sendMessage
     );
+
 }
 
 
@@ -1292,6 +1911,7 @@ if (messageInput) {
                 event.preventDefault();
 
                 sendMessage();
+
             }
 
         }
@@ -1310,8 +1930,10 @@ if (messageInput) {
                     messageInput.scrollHeight,
                     140
                 ) + "px";
+
         }
     );
+
 }
 
 
@@ -1321,6 +1943,7 @@ if (voiceBtn) {
         "click",
         startVoiceInput
     );
+
 }
 
 
@@ -1330,6 +1953,7 @@ if (menuBtn) {
         "click",
         openDrawerMenu
     );
+
 }
 
 
@@ -1339,6 +1963,7 @@ if (closeDrawer) {
         "click",
         closeDrawerMenu
     );
+
 }
 
 
@@ -1348,6 +1973,7 @@ if (drawerOverlay) {
         "click",
         closeDrawerMenu
     );
+
 }
 
 
@@ -1360,10 +1986,16 @@ if (newChatBtn) {
             createNewConversation();
 
             closeDrawerMenu();
+
         }
     );
+
 }
 
+
+/* =========================================================
+   PROFILE EVENTS
+   ========================================================= */
 
 if (profileBtn) {
 
@@ -1371,6 +2003,7 @@ if (profileBtn) {
         "click",
         openProfile
     );
+
 }
 
 
@@ -1380,6 +2013,7 @@ if (topProfileBtn) {
         "click",
         openProfile
     );
+
 }
 
 
@@ -1389,6 +2023,7 @@ if (closeProfileModal) {
         "click",
         closeProfile
     );
+
 }
 
 
@@ -1398,8 +2033,13 @@ if (saveProfileBtn) {
         "click",
         saveProfile
     );
+
 }
 
+
+/* =========================================================
+   MEMORY EVENTS
+   ========================================================= */
 
 if (memoryBtn) {
 
@@ -1407,6 +2047,7 @@ if (memoryBtn) {
         "click",
         openMemory
     );
+
 }
 
 
@@ -1416,6 +2057,7 @@ if (closeMemoryModal) {
         "click",
         closeMemory
     );
+
 }
 
 
@@ -1433,6 +2075,95 @@ if (clearMemoryBtn) {
 
         }
     );
+
+}
+
+
+/* =========================================================
+   RENAME EVENTS
+   ========================================================= */
+
+if (closeRenameModal) {
+
+    closeRenameModal.addEventListener(
+        "click",
+        closeRenameConversation
+    );
+
+}
+
+
+if (saveConversationNameBtn) {
+
+    saveConversationNameBtn.addEventListener(
+        "click",
+        saveConversationName
+    );
+
+}
+
+
+if (renameConversationInput) {
+
+    renameConversationInput.addEventListener(
+        "keydown",
+        event => {
+
+            if (event.key === "Enter") {
+
+                event.preventDefault();
+
+                saveConversationName();
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   ACCOUNT SWITCHING EVENTS
+   ========================================================= */
+
+if (switchAccountBtn) {
+
+    switchAccountBtn.addEventListener(
+        "click",
+        openAccountSwitcher
+    );
+
+}
+
+
+if (closeAccountModal) {
+
+    closeAccountModal.addEventListener(
+        "click",
+        closeAccountSwitcher
+    );
+
+}
+
+
+if (accountLoginBtn) {
+
+    accountLoginBtn.addEventListener(
+        "click",
+        switchToLoginAccount
+    );
+
+}
+
+
+if (accountSignupBtn) {
+
+    accountSignupBtn.addEventListener(
+        "click",
+        switchToSignupAccount
+    );
+
 }
 
 
@@ -1441,7 +2172,10 @@ if (clearMemoryBtn) {
    ========================================================= */
 
 const logoutBtn =
-    document.getElementById("logoutBtn");
+    document.getElementById(
+        "logoutBtn"
+    );
+
 
 if (logoutBtn) {
 
@@ -1457,11 +2191,12 @@ if (logoutBtn) {
 
         }
     );
+
 }
 
 
 /* =========================================================
-   INITIALIZE APP
+   INITIALIZE
    ========================================================= */
 
 function initializeApp() {
@@ -1471,6 +2206,7 @@ function initializeApp() {
     setupVoiceRecognition();
 
     setupSuggestions();
+
 
     if (currentUser) {
 
