@@ -1595,3 +1595,41 @@ textarea {
         display: none;
     }
 }
+
+/* =========================================================
+   NEXORA AI — RAISED MOBILE COMPOSER
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .input-area {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 55px;
+
+        width: 100%;
+
+        padding:
+            8px 10px 10px;
+
+        background:
+            linear-gradient(
+                180deg,
+                transparent,
+                rgba(5, 7, 13, 0.96) 25%
+            );
+
+        z-index: 50;
+    }
+
+    .input-wrapper {
+        max-width: 850px;
+        min-height: 54px;
+    }
+
+    .chat-container {
+        padding-bottom: 130px;
+    }
+
+}
