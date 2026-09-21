@@ -827,11 +827,9 @@ def get_user_memory(
         )
 
 
-    memory =
-        memories[username]
+    memory = memories[username]
 
-    defaults =
-        default_memory()
+    defaults = default_memory()
 
 
     for key, value in defaults.items():
@@ -890,11 +888,9 @@ def save_user_memory(
         return
 
 
-    memories =
-        get_memories_json()
+    memories = get_memories_json()
 
-    memories[username] =
-        memory
+    memories[username] = memory
 
     save_memories_json(
         memories
