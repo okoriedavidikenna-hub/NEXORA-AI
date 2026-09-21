@@ -1269,124 +1269,146 @@ async function sendMessage() {
 
     try {
 
-        const response =
-            await fetch(
-                `${API_URL}/chat`,
-                {
-                    method: "POST",
+    console.log("NEXORA currentUser:", currentUser);
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
+    if (!currentUser) {
+        throw new Error("No logged-in user found.");
+    }
+
+    const email =
+        currentUser.email || "";
+
+    const username =
+        currentUser.username || "";
+
+    if (!email && !username) {
+        throw new Error(
+            "Your account information is missing. Please log out and log in again."
+        );
+    }
+
+    const response =
+        await fetch(
+            `${API_URL}/chat`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    message: text,
+
+                    email: email,
+
+                    username: username,
+
+                    user: {
+                        name:
+                            currentUser.name || "",
+
+                        email: email,
+
+                        username: username
                     },
 
-                    body: JSON.stringify({
+                    conversation_id:
+                        currentConversation.id
 
-    message: text,
-
-    email:
-        currentUser?.email || "",
-
-    username:
-        currentUser?.username || "",
-
-    user: {
-        name:
-            currentUser?.name || "",
-
-        email:
-            currentUser?.email || "",
-
-        username:
-            currentUser?.username || ""
-    },
-
-    conversation_id:
-        currentConversation.id
-
-})
-                }
-            );
+                })
+            }
+        );
 
 
-        const data =
-            await response.json();
+    const data =
+        await response.json();
 
 
-        removeTypingIndicator();
+    removeTypingIndicator();
 
 
-        if (!response.ok) {
-
-            throw new Error(
-                data.message ||
-                data.error ||
-                "NEXORA could not respond."
-            );
-
-        }
+    console.log(
+        "NEXORA server response:",
+        data
+    );
 
 
-        const reply =
-            data.response ||
-            data.reply ||
+    if (!response.ok) {
+
+        throw new Error(
             data.message ||
-            "I couldn't generate a response.";
-
-
-        currentConversation.messages.push({
-
-            role: "assistant",
-
-            content: reply
-
-        });
-
-
-        addMessageToUI(
-            "assistant",
-            reply
+            data.error ||
+            `Server error: ${response.status}`
         );
-
-
-        saveLocalData();
-
-
-    } catch (error) {
-
-        console.error(error);
-
-        removeTypingIndicator();
-
-
-        const errorMessage =
-            "Sorry, I couldn't connect to NEXORA right now.";
-
-
-        currentConversation.messages.push({
-
-            role: "assistant",
-
-            content: errorMessage
-
-        });
-
-
-        addMessageToUI(
-            "assistant",
-            errorMessage
-        );
-
-
-        saveLocalData();
-
-
-    } finally {
-
-        isSending = false;
 
     }
-}
+
+
+    const reply =
+        data.response ||
+        data.reply ||
+        data.message ||
+        "I couldn't generate a response.";
+
+
+    currentConversation.messages.push({
+
+        role: "assistant",
+
+        content: reply
+
+    });
+
+
+    addMessageToUI(
+        "assistant",
+        reply
+    );
+
+
+    saveLocalData();
+
+
+} catch (error) {
+
+    console.error(
+        "NEXORA CHAT ERROR:",
+        error
+    );
+
+    removeTypingIndicator();
+
+
+    const errorMessage =
+        `NEXORA error: ${error.message}`;
+
+
+    currentConversation.messages.push({
+
+        role: "assistant",
+
+        content: errorMessage
+
+    });
+
+
+    addMessageToUI(
+        "assistant",
+        errorMessage
+    );
+
+
+    saveLocalData();
+
+
+} finally {
+
+    isSending = false;
+
+    }
 
 
 /* =========================================================
