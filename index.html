@@ -1,366 +1,556 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
-
-<title>NEXORA AI</title>
-
-<link
-    rel="stylesheet"
-    href="style.css"
->
-
-</head><body><!-- ===============================
-     AUTH SCREEN
-================================ --><div id="authScreen" class="auth-screen"><div class="auth-card">
-
-    <div class="auth-logo">
-        N
-    </div>
-
-    <h1>NEXORA AI</h1>
-
-    <p class="auth-subtitle">
-        Your intelligent AI assistant
-    </p>
-
-    <!-- LOGIN -->
-
-    <div id="loginScreen">
-
-        <div class="auth-section-heading">
-
-            <h2>Welcome Back</h2>
-
-            <p>
-                Sign in to continue to NEXORA
-            </p>
-
-        </div>
-
-        <form id="loginForm" class="auth-form">
-
-            <input
-                type="text"
-                id="loginUsername"
-                placeholder="Username"
-                autocomplete="username"
-            >
-
-            <input
-                type="password"
-                id="loginPassword"
-                placeholder="Password"
-                autocomplete="current-password"
-            >
-
-            <button
-                id="loginButton"
-                class="auth-button"
-                type="submit"
-            >
-                Login
-            </button>
-
-        </form>
-
-        <div class="auth-switch">
-
-            <span>
-                Don't have an account?
-            </span>
-
-            <button
-                id="showSignupButton"
-                type="button"
-            >
-                Create Account
-            </button>
-
-        </div>
-
-    </div>
-
-    <!-- SIGN UP -->
-
-    <div id="signupScreen" class="hidden">
-
-        <div class="auth-section-heading">
-
-            <h2>Create Account</h2>
-
-            <p>
-                Join NEXORA and start your journey
-            </p>
-
-        </div>
-
-        <form id="signupForm" class="auth-form">
-
-            <input
-                type="text"
-                id="signupUsername"
-                placeholder="Choose a username"
-                autocomplete="username"
-            >
-
-            <input
-                type="password"
-                id="signupPassword"
-                placeholder="Create a password"
-                autocomplete="new-password"
-            >
-
-            <input
-                type="password"
-                id="signupConfirmPassword"
-                placeholder="Confirm password"
-                autocomplete="new-password"
-            >
-
-            <button
-                id="signupButton"
-                class="auth-button"
-                type="submit"
-            >
-                Create Account
-            </button>
-
-        </form>
-
-        <div class="auth-switch">
-
-            <span>
-                Already have an account?
-            </span>
-
-            <button
-                id="showLoginButton"
-                type="button"
-            >
-                Back to Login
-            </button>
-
-        </div>
-
-    </div>
-
-    <p
-        id="authMessage"
-        class="auth-message"
-    ></p>
-
-    <div class="creator-credit">
-        CREATED BY OKORIE DAVID IKENNA
-    </div>
-
-</div>
-
-</div><!-- ===============================
-     MAIN NEXORA APP
-================================ --><div id="app" class="app hidden"><!-- HEADER -->
-
-<header class="header">
-
-    <div class="logo">
-
-        <div class="logo-icon">
-            N
-        </div>
-
-        <div class="logo-text">
-
-            <h1>
-                NEXORA
-                <span class="verification-badge">✓</span>
-            </h1>
-
-            <p>AI ASSISTANT</p>
-
-        </div>
-
-    </div>
-
-    <div class="header-actions">
-
-        <div class="status">
-
-            <span class="status-dot"></span>
-
-            Online
-
-        </div>
-
-        <button
-            id="profileButton"
-            class="profile-button"
-            type="button"
-        >
-            👤
-        </button>
-
-        <button
-            id="clearButton"
-            class="clear-button"
-            type="button"
-        >
-            Clear
-        </button>
-
-    </div>
-
-</header>
-
-
-<!-- PROFILE -->
-
-<div
-    id="profilePanel"
-    class="profile-panel hidden"
->
-
-    <div class="profile-header">
-
-        <h2>Your Profile</h2>
-
-        <button
-            id="closeProfileButton"
-            class="close-profile"
-            type="button"
-        >
-            ✕
-        </button>
-
-    </div>
-
-    <div class="profile-avatar">
-        👤
-    </div>
-
-    <p class="profile-label">
-        Username
-    </p>
-
-    <h3 id="profileUsername">
-        User
-    </h3>
-
-    <div class="profile-stat">
-
-        <span>
-            Conversations
-        </span>
-
-        <strong id="conversationCount">
-            0
-        </strong>
-
-    </div>
-
-    <button
-        id="logoutButton"
-        class="logout-button"
-        type="button"
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
     >
-        🚪 Logout
-    </button>
 
-</div>
+    <title>NEXORA AI</title>
 
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+</head>
 
-<!-- CHAT -->
+<body>
 
-<main class="chat-container">
+    <!-- =========================================================
+         NEXORA SPLASH SCREEN
+    ========================================================== -->
 
-    <div id="chatBox" class="chat-box">
+    <div id="splashScreen" class="splash-screen">
 
-        <div class="welcome">
+        <div class="splash-logo">
 
-            <div class="welcome-icon">
-                ✦
+            <div class="splash-logo-mark">
+                N
             </div>
 
-            <h2>
-                Hello, I'm NEXORA.
-            </h2>
+            <div class="splash-name">
+                NEXORA
+            </div>
 
-            <p>
-                Your intelligent AI assistant.
-                Ask me anything and let's get started.
+            <div class="splash-tagline">
+                AI ASSISTANT
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         AUTH SCREEN
+    ========================================================== -->
+
+    <div id="authScreen" class="auth-screen">
+
+        <div class="auth-card">
+
+            <div class="auth-logo">
+                N
+            </div>
+
+            <h1>NEXORA AI</h1>
+
+            <p class="auth-subtitle">
+                Your intelligent AI assistant
             </p>
 
-        </div>
 
-    </div>
+            <!-- LOGIN SCREEN -->
 
+            <div id="loginScreen" class="auth-form">
 
-    <!-- INPUT -->
+                <h2>Welcome Back</h2>
 
-    <div class="input-area">
-
-        <div class="input-wrapper">
-
-            <input
-                type="text"
-                id="messageInput"
-                placeholder="Message NEXORA..."
-                autocomplete="off"
-            >
-
-            <button
-                id="voiceButton"
-                class="voice-button"
-                type="button"
-                aria-label="Voice input"
-                title="Speak to NEXORA"
-            >
-                🎙️
-            </button>
-
-            <button
-                id="sendButton"
-                type="button"
-                aria-label="Send message"
-                title="Send message"
-            >
-                ➤
-            </button>
-
-        </div>
-
-        <p
-            id="voiceStatus"
-            class="voice-status"
-        ></p>
-
-        <div class="voice-toggle">
-
-            <span>🔊 Voice replies</span>
-
-            <label class="switch">
+                <p>
+                    Login to continue to NEXORA
+                </p>
 
                 <input
-                    type="checkbox"
-                    id="voiceReplyToggle"
-                    checked
+                    type="email"
+                    id="loginEmail"
+                    placeholder="Email"
+                    autocomplete="email"
                 >
 
-                <span class="slider"></span>
+                <input
+                    type="password"
+                    id="loginPassword"
+                    placeholder="Password"
+                    autocomplete="current-password"
+                >
 
-            </label>
+                <button
+                    id="loginBtn"
+                    class="auth-button"
+                >
+                    Login
+                </button>
+
+                <p class="auth-switch">
+                    Don't have an account?
+                    <span id="showSignup">
+                        Sign Up
+                    </span>
+                </p>
+
+            </div>
+
+
+            <!-- SIGNUP SCREEN -->
+
+            <div
+                id="signupScreen"
+                class="auth-form"
+                style="display:none;"
+            >
+
+                <h2>Create Account</h2>
+
+                <p>
+                    Join NEXORA AI today
+                </p>
+
+                <input
+                    type="text"
+                    id="signupName"
+                    placeholder="Your name"
+                    autocomplete="name"
+                >
+
+                <input
+                    type="email"
+                    id="signupEmail"
+                    placeholder="Email"
+                    autocomplete="email"
+                >
+
+                <input
+                    type="password"
+                    id="signupPassword"
+                    placeholder="Password"
+                    autocomplete="new-password"
+                >
+
+                <button
+                    id="signupBtn"
+                    class="auth-button"
+                >
+                    Sign Up
+                </button>
+
+                <p class="auth-switch">
+                    Already have an account?
+                    <span id="showLogin">
+                        Login
+                    </span>
+                </p>
+
+            </div>
+
+            <div
+                id="authMessage"
+                class="auth-message"
+            ></div>
 
         </div>
 
-        <p class="disclaimer">
-            NEXORA can make mistakes.
-            Check important information.
-        </p>
+    </div>
+
+
+    <!-- =========================================================
+         MAIN APP
+    ========================================================== -->
+
+    <div
+        id="app"
+        class="app"
+        style="display:none;"
+    >
+
+        <!-- SIDEBAR / DRAWER -->
+
+        <div
+            id="drawerOverlay"
+            class="drawer-overlay"
+        ></div>
+
+        <aside
+            id="drawer"
+            class="drawer"
+        >
+
+            <div class="drawer-header">
+
+                <div class="drawer-brand">
+
+                    <div class="drawer-logo">
+                        N
+                    </div>
+
+                    <span>
+                        NEXORA
+                    </span>
+
+                </div>
+
+                <button
+                    id="closeDrawer"
+                    class="icon-button"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <button
+                id="newChatBtn"
+                class="new-chat-button"
+            >
+                + New Chat
+            </button>
+
+
+            <div class="drawer-section">
+
+                <h3>
+                    Conversations
+                </h3>
+
+                <div
+                    id="conversationList"
+                    class="conversation-list"
+                ></div>
+
+            </div>
+
+
+            <div class="drawer-bottom">
+
+                <button
+                    id="profileBtn"
+                    class="drawer-option"
+                >
+                    <span>👤</span>
+                    Profile
+                </button>
+
+                <button
+                    id="memoryBtn"
+                    class="drawer-option"
+                >
+                    <span>🧠</span>
+                    Memory
+                </button>
+
+                <button
+                    id="logoutBtn"
+                    class="drawer-option"
+                >
+                    <span>↪</span>
+                    Logout
+                </button>
+
+            </div>
+
+        </aside>
+
+
+        <!-- =====================================================
+             MAIN CHAT AREA
+        ====================================================== -->
+
+        <main class="main-content">
+
+            <!-- TOP BAR -->
+
+            <header class="top-bar">
+
+                <button
+                    id="menuBtn"
+                    class="icon-button"
+                >
+                    ☰
+                </button>
+
+                <div class="top-brand">
+
+                    <div class="top-logo">
+                        N
+                    </div>
+
+                    <span>
+                        NEXORA AI
+                    </span>
+
+                </div>
+
+                <button
+                    id="topProfileBtn"
+                    class="profile-button"
+                >
+                    <span id="profileInitial">
+                        U
+                    </span>
+                </button>
+
+            </header>
+
+
+            <!-- CHAT -->
+
+            <section
+                id="chatContainer"
+                class="chat-container"
+            >
+
+                <div
+                    id="welcomeScreen"
+                    class="welcome-screen"
+                >
+
+                    <div class="welcome-logo">
+                        N
+                    </div>
+
+                    <h1>
+                        Hello, I'm NEXORA
+                    </h1>
+
+                    <p>
+                        Your intelligent AI assistant.
+                        Ask me anything.
+                    </p>
+
+                    <div class="suggestion-grid">
+
+                        <button class="suggestion">
+                            Explain something to me
+                        </button>
+
+                        <button class="suggestion">
+                            Help me with school
+                        </button>
+
+                        <button class="suggestion">
+                            Write something for me
+                        </button>
+
+                        <button class="suggestion">
+                            Give me an idea
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="messages"
+                    class="messages"
+                ></div>
+
+            </section>
+
+
+            <!-- INPUT AREA -->
+
+            <div class="input-area">
+
+                <div class="input-wrapper">
+
+                    <textarea
+                        id="messageInput"
+                        placeholder="Message NEXORA..."
+                        rows="1"
+                    ></textarea>
+
+                    <button
+                        id="voiceBtn"
+                        class="input-button"
+                        title="Voice input"
+                    >
+                        🎤
+                    </button>
+
+                    <button
+                        id="sendBtn"
+                        class="send-button"
+                        title="Send"
+                    >
+                        ➤
+                    </button>
+
+                </div>
+
+                <p class="input-disclaimer">
+                    NEXORA AI can make mistakes. Check important information.
+                </p>
+
+            </div>
+
+        </main>
+
+
+        <!-- =====================================================
+             PROFILE MODAL
+        ====================================================== -->
+
+        <div
+            id="profileModal"
+            class="modal"
+            style="display:none;"
+        >
+
+            <div class="modal-card">
+
+                <button
+                    id="closeProfileModal"
+                    class="modal-close"
+                >
+                    ×
+                </button>
+
+                <div class="modal-logo">
+                    N
+                </div>
+
+                <h2>
+                    Your Profile
+                </h2>
+
+                <input
+                    type="text"
+                    id="profileName"
+                    placeholder="Your name"
+                >
+
+                <input
+                    type="email"
+                    id="profileEmail"
+                    placeholder="Email"
+                    disabled
+                >
+
+                <button
+                    id="saveProfileBtn"
+                    class="auth-button"
+                >
+                    Save Changes
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             MEMORY MODAL
+        ====================================================== -->
+
+        <div
+            id="memoryModal"
+            class="modal"
+            style="display:none;"
+        >
+
+            <div class="modal-card memory-card">
+
+                <button
+                    id="closeMemoryModal"
+                    class="modal-close"
+                >
+                    ×
+                </button>
+
+                <div class="modal-logo">
+                    🧠
+                </div>
+
+                <h2>
+                    NEXORA Memory
+                </h2>
+
+                <p>
+                    Things NEXORA remembers about you.
+                </p>
+
+                <div
+                    id="memoryContent"
+                    class="memory-content"
+                ></div>
+
+                <button
+                    id="clearMemoryBtn"
+                    class="danger-button"
+                >
+                    Clear Memory
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             CONFIRMATION MODAL
+        ====================================================== -->
+
+        <div
+            id="confirmModal"
+            class="modal"
+            style="display:none;"
+        >
+
+            <div class="modal-card">
+
+                <h2 id="confirmTitle">
+                    Confirm
+                </h2>
+
+                <p id="confirmMessage">
+                    Are you sure?
+                </p>
+
+                <div class="modal-actions">
+
+                    <button
+                        id="confirmCancel"
+                        class="secondary-button"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        id="confirmOkay"
+                        class="danger-button"
+                    >
+                        Confirm
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
 
     </div>
 
-</main>
 
-</div><script src="script.js?v=11"></script></body></html>
+    <!-- =========================================================
+         JAVASCRIPT
+    ========================================================== -->
 
+    <script src="script.js?v=11"></script>
+
+</body>
+
+</html>
