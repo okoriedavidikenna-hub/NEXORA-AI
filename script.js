@@ -1282,15 +1282,29 @@ async function sendMessage() {
 
                     body: JSON.stringify({
 
-                        message: text,
+    message: text,
 
-                        user:
-                            currentUser || {},
+    email:
+        currentUser?.email || "",
 
-                        conversation_id:
-                            currentConversation.id
+    username:
+        currentUser?.username || "",
 
-                    })
+    user: {
+        name:
+            currentUser?.name || "",
+
+        email:
+            currentUser?.email || "",
+
+        username:
+            currentUser?.username || ""
+    },
+
+    conversation_id:
+        currentConversation.id
+
+})
                 }
             );
 
