@@ -983,8 +983,7 @@ def get_conversations(
             conn.close()
 
 
-    memory =
-        get_user_memory(
+    memory = get_user_memory(
             username
         )
 
@@ -1066,8 +1065,7 @@ def find_conversation(
             conn.close()
 
 
-    memory =
-        get_user_memory(
+    memory = get_user_memory(
             username
         )
 
@@ -1158,8 +1156,7 @@ def create_conversation(
         return conversation
 
 
-    memory =
-        get_user_memory(
+    memory = get_user_memory(
             username
         )
 
@@ -1375,8 +1372,7 @@ def add_message(
             conn.close()
 
 
-    memory =
-        get_user_memory(
+    memory = get_user_memory(
             username
         )
 
@@ -1539,8 +1535,7 @@ def update_conversation_title(
             conn.close()
 
 
-    memory =
-        get_user_memory(
+    memory = get_user_memory(
             username
         )
 
@@ -1620,8 +1615,7 @@ def save_context(
     subject=""
 ):
 
-    memory =
-        get_user_memory(
+    memory = get_user_memory(
             username
         )
 
@@ -1922,8 +1916,7 @@ def generate_openai_response(
         return None
 
 
-    memory =
-        get_user_memory(
+    memory = get_user_memory(
             username
         )
 
