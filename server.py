@@ -807,8 +807,7 @@ def get_user_memory(
             conn.close()
 
 
-    memories =
-        get_memories_json()
+    memories = get_memories_json()
 
 
     if (
