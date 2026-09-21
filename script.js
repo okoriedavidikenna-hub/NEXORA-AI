@@ -1686,22 +1686,25 @@ async function sendMessage() {
     try {
 
         const data =
-            await apiRequest(
-                "/chat",
-                {
-                    method: "POST",
+    await apiRequest(
+        "/chat",
+        {
+            method: "POST",
 
-                    body:
-                        JSON.stringify({
-                            ...userPayload(),
+            body:
+                JSON.stringify({
+                    ...userPayload(),
 
-                            message: text,
+                    message: text,
 
-                            conversation_id:
-                                currentConversation.id
-                        })
-                }
-            );
+                    conversation_id:
+                        currentConversation.id,
+
+                    generate_image:
+                        /generate\s+(an?\s+)?(image|picture|photo|pic)|create\s+(an?\s+)?(image|picture|photo|pic)|make\s+(an?\s+)?(image|picture|photo|pic)|draw\s+(an?\s+)?(image|picture|photo|pic)/i.test(text)
+                })
+        }
+    );
 
 
         typing?.remove();
