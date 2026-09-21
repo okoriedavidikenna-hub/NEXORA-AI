@@ -16,7 +16,7 @@
     --text-muted: #687286;
 
     --accent: #7c5cff;
-    --accent-2: #9b82ff;
+   chatccent-2: #9b82ff;
     --accent-soft: rgba(124, 92, 255, 0.15);
 
     --danger: #ff5f6d;
@@ -1606,7 +1606,7 @@ textarea {
         position: fixed;
         left: 0;
         right: 0;
-        bottom: 68px;
+        bottom: 60px;
 
         width: 100%;
 
@@ -1631,5 +1631,6 @@ textarea {
     .chat-container {
         padding-bottom: 130px;
     }
-
 }
+
+        
