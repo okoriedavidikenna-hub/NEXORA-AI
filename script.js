@@ -5,7 +5,7 @@
    DAVIDS DIGITALS LTD.©
    ============================================================ */
 
-const API_BASE = "https://nexora-ai-1-r9y5.onrender.com";
+const API_BASE = "https://nexora-ai-9jgj.onrender.com";
 
 
 /* ============================================================
