@@ -1811,3 +1811,12 @@ textarea {
         padding-bottom: 130px;
     }
 }
+
+.created-by {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    color: rgba(255, 255, 255, 0.45);
+    font-weight: 750;
+}
