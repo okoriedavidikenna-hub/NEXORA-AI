@@ -1812,11 +1812,15 @@ textarea {
     }
 }
 
-.created-by {
-    margin-top: 24px;
+.auth-brand-credit {
+    margin: 8px 0 24px;
     text-align: center;
-    font-size: 10px;
+    font-size: 11px;
     letter-spacing: 1.2px;
-    color: rgba(255, 255, 255, 0.45);
+    color: #aeb4c2;
+}
+
+.auth-brand-credit strong {
+    color: #d6a84f;
     font-weight: 750;
 }
