@@ -1,830 +1,594 @@
-/* =========================================================
-   NEXORA AI 12 — FRONTEND
-   Compatible with current index.html
-   ========================================================= */
-
-const API_URL =
-    "https://nexora-ai-9jgj.onrender.com";
-
-
-/* =========================================================
-   ELEMENTS
-   ========================================================= */
-
-const splashScreen =
-    document.getElementById("splashScreen");
-
-const authScreen =
-    document.getElementById("authScreen");
-
-const app =
-    document.getElementById("app");
-
-const loginScreen =
-    document.getElementById("loginScreen");
-
-const signupScreen =
-    document.getElementById("signupScreen");
-
-const loginEmail =
-    document.getElementById("loginEmail");
-
-const loginPassword =
-    document.getElementById("loginPassword");
-
-const signupName =
-    document.getElementById("signupName");
-
-const signupEmail =
-    document.getElementById("signupEmail");
-
-const signupPassword =
-    document.getElementById("signupPassword");
-
-const loginBtn =
-    document.getElementById("loginBtn");
-
-const signupBtn =
-    document.getElementById("signupBtn");
-
-const showSignup =
-    document.getElementById("showSignup");
-
-const showLogin =
-    document.getElementById("showLogin");
-
-const authMessage =
-    document.getElementById("authMessage");
-
-
-/* =========================================================
-   APP ELEMENTS
-   ========================================================= */
-
-const drawer =
-    document.getElementById("drawer");
-
-const drawerOverlay =
-    document.getElementById("drawerOverlay");
-
-const menuBtn =
-    document.getElementById("menuBtn");
-
-const closeDrawer =
-    document.getElementById("closeDrawer");
-
-const newChatBtn =
-    document.getElementById("newChatBtn");
-
-const conversationList =
-    document.getElementById("conversationList");
-
-const profileBtn =
-    document.getElementById("profileBtn");
-
-const memoryBtn =
-    document.getElementById("memoryBtn");
-
-const switchAccountBtn =
-    document.getElementById("switchAccountBtn");
-
-const logoutBtn =
-    document.getElementById("logoutBtn");
-
-const topProfileBtn =
-    document.getElementById("topProfileBtn");
-
-const profileInitial =
-    document.getElementById("profileInitial");
-
-const chatContainer =
-    document.getElementById("chatContainer");
-
-const welcomeScreen =
-    document.getElementById("welcomeScreen");
-
-const messages =
-    document.getElementById("messages");
-
-const messageInput =
-    document.getElementById("messageInput");
-
-const voiceBtn =
-    document.getElementById("voiceBtn");
-
-const sendBtn =
-    document.getElementById("sendBtn");
-
-
-/* =========================================================
-   PROFILE MODAL
-   ========================================================= */
-
-const profileModal =
-    document.getElementById("profileModal");
-
-const closeProfileModal =
-    document.getElementById("closeProfileModal");
-
-const profileName =
-    document.getElementById("profileName");
-
-const profileEmail =
-    document.getElementById("profileEmail");
-
-const saveProfileBtn =
-    document.getElementById("saveProfileBtn");
-
-
-/* =========================================================
-   MEMORY MODAL
-   ========================================================= */
-
-const memoryModal =
-    document.getElementById("memoryModal");
-
-const closeMemoryModal =
-    document.getElementById("closeMemoryModal");
-
-const memoryContent =
-    document.getElementById("memoryContent");
-
-const clearMemoryBtn =
-    document.getElementById("clearMemoryBtn");
-
-
-/* =========================================================
-   RENAME MODAL
-   ========================================================= */
-
-const renameModal =
-    document.getElementById("renameModal");
-
-const closeRenameModal =
-    document.getElementById("closeRenameModal");
-
-const renameConversationInput =
-    document.getElementById(
-        "renameConversationInput"
-    );
-
-const saveConversationNameBtn =
-    document.getElementById(
-        "saveConversationNameBtn"
-    );
-
-
-/* =========================================================
-   ACCOUNT MODAL
-   ========================================================= */
-
-const accountModal =
-    document.getElementById("accountModal");
-
-const closeAccountModal =
-    document.getElementById("closeAccountModal");
-
-const accountLoginBtn =
-    document.getElementById("accountLoginBtn");
-
-const accountSignupBtn =
-    document.getElementById("accountSignupBtn");
-
-
-/* =========================================================
-   CONFIRM MODAL
-   ========================================================= */
-
-const confirmModal =
-    document.getElementById("confirmModal");
-
-const confirmTitle =
-    document.getElementById("confirmTitle");
-
-const confirmMessage =
-    document.getElementById("confirmMessage");
-
-const confirmCancel =
-    document.getElementById("confirmCancel");
-
-const confirmOkay =
-    document.getElementById("confirmOkay");
-
-
-/* =========================================================
-   SESSION
-   ========================================================= */
+/* ============================================================
+   NEXORA AI
+   AI WEBSITE FRONTEND CONTROLLER
+   MATCHED TO THE EXACT NEXORA AI HTML + CSS
+   DAVIDS DIGITALS LTD.©
+   ============================================================ */
+
+const API_BASE = "https://nexora-ai-1-r9y5.onrender.com";
+
+
+/* ============================================================
+   STATE
+   ============================================================ */
 
 let currentUser = null;
-
-let currentConversation = null;
-
+let currentConversationId = null;
 let conversations = [];
+let renameConversationId = null;
+let isSending = false;
+let recognition = null;
 
-let renameTargetId = null;
 
-let confirmAction = null;
+/* ============================================================
+   DOM HELPER
+   ============================================================ */
+
+const $ = (id) => document.getElementById(id);
 
 
-/* =========================================================
-   SAFE STORAGE
-   ========================================================= */
+/* ============================================================
+   DISPLAY HELPERS
+   ============================================================ */
 
-function loadSavedUser() {
+function show(element) {
+    if (element) {
+        element.style.display = "";
+    }
+}
+
+
+function hide(element) {
+    if (element) {
+        element.style.display = "none";
+    }
+}
+
+
+/* ============================================================
+   API
+   ============================================================ */
+
+async function api(endpoint, options = {}) {
+
+    const config = {
+        method: options.method || "GET",
+        headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {})
+        }
+    };
+
+    if (options.body !== undefined) {
+        config.body = options.body;
+    }
 
     try {
 
-        const saved =
-            localStorage.getItem(
-                "nexora_user"
+        const response = await fetch(
+            API_BASE + endpoint,
+            config
+        );
+
+        const data = await response
+            .json()
+            .catch(() => ({}));
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                data.error ||
+                `Request failed (${response.status})`
             );
-
-        if (saved) {
-
-            currentUser =
-                JSON.parse(saved);
-
-            return;
         }
+
+        return data;
 
     } catch (error) {
 
         console.error(
-            "User storage error:",
+            "NEXORA API Error:",
             error
         );
-    }
 
-
-    const oldUsername =
-        localStorage.getItem(
-            "nexora_username"
-        );
-
-    if (oldUsername) {
-
-        currentUser = {
-            username: oldUsername,
-            email: "",
-            name: oldUsername
-        };
+        throw error;
     }
 }
 
 
-function saveUser() {
+/* ============================================================
+   AUTH MESSAGE
+   ============================================================ */
 
-    if (!currentUser) {
-        return;
+function setAuthMessage(message, type = "") {
+
+    const box = $("authMessage");
+
+    if (!box) return;
+
+    box.textContent = message || "";
+
+    box.className =
+        "auth-message" +
+        (type ? ` ${type}` : "");
+}
+
+
+/* ============================================================
+   AUTH SCREENS
+   ============================================================ */
+
+function showAuthScreen(screenId) {
+
+    hide($("loginScreen"));
+    hide($("signupScreen"));
+
+    /*
+       The current AI HTML only contains login and signup.
+       These checks remain defensive in case they are added later.
+    */
+
+    hide($("forgotPasswordScreen"));
+    hide($("resetPasswordScreen"));
+
+    const screen = $(screenId);
+
+    if (screen) {
+        show(screen);
     }
+
+    setAuthMessage("");
+}
+
+
+/* ============================================================
+   USER STORAGE
+   ============================================================ */
+
+function saveUser(user) {
+
+    if (!user) return;
+
+    currentUser = user;
 
     localStorage.setItem(
         "nexora_user",
-        JSON.stringify(currentUser)
-    );
-
-    if (currentUser.username) {
-
-        localStorage.setItem(
-            "nexora_username",
-            currentUser.username
-        );
-    }
-}
-
-
-function clearSavedUser() {
-
-    localStorage.removeItem(
-        "nexora_user"
-    );
-
-    localStorage.removeItem(
-        "nexora_username"
+        JSON.stringify(user)
     );
 }
 
 
-/* =========================================================
-   API HELPERS
-   ========================================================= */
-
-async function apiRequest(
-    endpoint,
-    options = {}
-) {
-
-    const response =
-        await fetch(
-            `${API_URL}${endpoint}`,
-            {
-                ...options,
-
-                headers: {
-                    "Content-Type":
-                        "application/json",
-
-                    ...(options.headers || {})
-                }
-            }
-        );
-
-    let data = {};
+function loadUser() {
 
     try {
-        data =
-            await response.json();
-    } catch {
-        data = {};
-    }
 
-    if (!response.ok) {
+        const saved =
+            localStorage.getItem("nexora_user");
 
-        throw new Error(
-            data.message ||
-            data.error ||
-            `Request failed (${response.status})`
+        if (!saved) {
+            return null;
+        }
+
+        return JSON.parse(saved);
+
+    } catch (error) {
+
+        console.error(
+            "Saved user error:",
+            error
         );
+
+        localStorage.removeItem(
+            "nexora_user"
+        );
+
+        return null;
+    }
+}
+
+
+/* ============================================================
+   USER ID / PAYLOAD
+   ============================================================ */
+
+function getUserId() {
+
+    if (!currentUser) {
+        return null;
     }
 
-    return data;
+    return (
+        currentUser.id ||
+        currentUser.user_id ||
+        currentUser.userId ||
+        null
+    );
 }
 
 
 function userPayload() {
 
+    if (!currentUser) {
+        return {};
+    }
+
     return {
+        user_id:
+            getUserId(),
 
         email:
-            currentUser?.email || "",
+            currentUser.email || "",
 
         username:
-            currentUser?.username || "",
+            currentUser.username ||
+            currentUser.name ||
+            "",
 
-        user: {
+        name:
+            currentUser.name ||
+            currentUser.username ||
+            "",
 
-            name:
-                currentUser?.name || "",
-
-            email:
-                currentUser?.email || "",
-
-            username:
-                currentUser?.username || ""
-        }
+        user:
+            currentUser
     };
 }
 
 
-/* =========================================================
-   AUTH SCREENS
-   ========================================================= */
+/* ============================================================
+   AUTH USER NORMALIZER
+   ============================================================ */
 
-function showLoginScreen() {
+function normalizeUser(data) {
 
-    if (loginScreen) {
+    const user =
+        data?.user ||
+        data?.account ||
+        null;
 
-        loginScreen.style.display =
-            "block";
+    if (user) {
+        return user;
     }
 
-    if (signupScreen) {
+    if (
+        data?.id ||
+        data?.user_id ||
+        data?.email
+    ) {
 
-        signupScreen.style.display =
-            "none";
+        return {
+            id:
+                data.id ||
+                data.user_id,
+
+            email:
+                data.email || "",
+
+            name:
+                data.name ||
+                data.username ||
+                ""
+        };
     }
 
-    if (authMessage) {
-
-        authMessage.textContent =
-            "";
-    }
+    return null;
 }
 
 
-function showSignupScreen() {
+/* ============================================================
+   LOGOUT
+   ============================================================ */
 
-    if (loginScreen) {
+function logout() {
 
-        loginScreen.style.display =
-            "none";
-    }
+    currentUser = null;
+    currentConversationId = null;
+    conversations = [];
+    renameConversationId = null;
 
-    if (signupScreen) {
-
-        signupScreen.style.display =
-            "block";
-    }
-
-    if (authMessage) {
-
-        authMessage.textContent =
-            "";
-    }
-}
-
-
-showSignup?.addEventListener(
-    "click",
-    showSignupScreen
-);
-
-
-showLogin?.addEventListener(
-    "click",
-    showLoginScreen
-);
-
-
-/* =========================================================
-   SPLASH
-   ========================================================= */
-
-function hideSplash() {
-
-    if (!splashScreen) {
-        return;
-    }
-
-    splashScreen.classList.add(
-        "hide"
+    localStorage.removeItem(
+        "nexora_user"
     );
 
-    setTimeout(() => {
+    hide($("app"));
+    hide($("splashScreen"));
 
-        splashScreen.style.display =
-            "none";
+    show($("authScreen"));
 
-    }, 750);
-}
-
-
-/* =========================================================
-   INITIALIZATION
-   ========================================================= */
-
-function initializeApp() {
-
-    loadSavedUser();
-
-    /*
-     * Always remove the splash.
-     * This prevents the splash screen from
-     * trapping the application if anything
-     * takes longer than expected.
-     */
-
-    setTimeout(
-        hideSplash,
-        900
+    showAuthScreen(
+        "loginScreen"
     );
 
-
-    if (currentUser) {
-
-        openApp();
-
-    } else {
-
-        if (authScreen) {
-
-            authScreen.style.display =
-                "flex";
-        }
-
-        if (app) {
-
-            app.style.display =
-                "none";
-        }
-
-        showLoginScreen();
+    if ($("loginEmail")) {
+        $("loginEmail").value = "";
     }
+
+    if ($("loginPassword")) {
+        $("loginPassword").value = "";
+    }
+
+    if ($("messages")) {
+        $("messages").innerHTML = "";
+    }
+
+    show($("welcomeScreen"));
+
+    closeDrawer();
 }
 
 
-/* =========================================================
-   SIGNUP
-   ========================================================= */
+/* ============================================================
+   LOGIN
+   ============================================================ */
 
-signupBtn?.addEventListener(
-    "click",
-    signupUser
-);
-
-
-async function signupUser() {
-
-    const name =
-        signupName?.value.trim();
+async function login() {
 
     const email =
-        signupEmail?.value.trim();
+        $("loginEmail")?.value.trim();
 
     const password =
-        signupPassword?.value || "";
+        $("loginPassword")?.value || "";
 
-
-    if (!name || !email || !password) {
+    if (!email) {
 
         setAuthMessage(
-            "Please fill in all fields."
+            "Please enter your email.",
+            "error"
         );
 
         return;
     }
 
+    if (!password) {
+
+        setAuthMessage(
+            "Please enter your password.",
+            "error"
+        );
+
+        return;
+    }
+
+    const button = $("loginBtn");
+
+    if (button) {
+
+        button.disabled = true;
+        button.textContent = "Logging in...";
+    }
+
+    try {
+
+        const data = await api(
+            "/login",
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    email,
+                    password
+                })
+            }
+        );
+
+        const user =
+            normalizeUser(data);
+
+        if (!user) {
+
+            throw new Error(
+                data.message ||
+                "Login succeeded but no account information was returned."
+            );
+        }
+
+        saveUser(user);
+
+        setAuthMessage("");
+
+        await openApp();
+
+    } catch (error) {
+
+        setAuthMessage(
+            error.message ||
+            "Unable to connect to NEXORA.",
+            "error"
+        );
+
+    } finally {
+
+        if (button) {
+
+            button.disabled = false;
+            button.textContent = "Login";
+        }
+    }
+}
+
+
+/* ============================================================
+   SIGNUP
+   ============================================================ */
+
+async function signup() {
+
+    const name =
+        $("signupName")?.value.trim();
+
+    const email =
+        $("signupEmail")?.value.trim();
+
+    const password =
+        $("signupPassword")?.value || "";
+
+    if (!name) {
+
+        setAuthMessage(
+            "Please enter your name.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!email) {
+
+        setAuthMessage(
+            "Please enter your email.",
+            "error"
+        );
+
+        return;
+    }
 
     if (password.length < 6) {
 
         setAuthMessage(
-            "Password must be at least 6 characters."
+            "Password must be at least 6 characters.",
+            "error"
         );
 
         return;
     }
 
+    const button = $("signupBtn");
 
-    setAuthMessage(
-        "Creating your account..."
-    );
+    if (button) {
 
-    signupBtn.disabled = true;
-
+        button.disabled = true;
+        button.textContent = "Creating...";
+    }
 
     try {
 
-        const data =
-            await apiRequest(
-                "/signup",
-                {
-                    method: "POST",
+        const data = await api(
+            "/signup",
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    name,
+                    email,
+                    password
+                })
+            }
+        );
 
-                    body:
-                        JSON.stringify({
-                            name,
-                            email,
-                            password
-                        })
-                }
+        const user =
+            normalizeUser(data);
+
+        if (!user) {
+
+            throw new Error(
+                data.message ||
+                "Account was created but no account information was returned."
             );
+        }
 
+        saveUser(user);
 
-        currentUser =
-            data.user || {
-                name,
-                email,
-                username: email
-            };
+        setAuthMessage("");
 
-
-        saveUser();
-
-
-        setAuthMessage(
-            "Account created successfully!"
-        );
-
-
-        setTimeout(
-            openApp,
-            500
-        );
-
+        await openApp();
 
     } catch (error) {
 
-        console.error(
-            "Signup error:",
-            error
-        );
-
         setAuthMessage(
             error.message ||
-            "Could not create your account."
+            "Unable to create your account.",
+            "error"
         );
 
     } finally {
 
-        signupBtn.disabled =
-            false;
+        if (button) {
+
+            button.disabled = false;
+            button.textContent = "Sign Up";
+        }
     }
 }
 
 
-/* =========================================================
-   LOGIN
-   ========================================================= */
-
-loginBtn?.addEventListener(
-    "click",
-    loginUser
-);
-
-
-async function loginUser() {
-
-    const email =
-        loginEmail?.value.trim();
-
-    const password =
-        loginPassword?.value || "";
-
-
-    if (!email || !password) {
-
-        setAuthMessage(
-            "Please enter your email and password."
-        );
-
-        return;
-    }
-
-
-    setAuthMessage(
-        "Logging in..."
-    );
-
-    loginBtn.disabled = true;
-
-
-    try {
-
-        const data =
-            await apiRequest(
-                "/login",
-                {
-                    method: "POST",
-
-                    body:
-                        JSON.stringify({
-                            email,
-                            password
-                        })
-                }
-            );
-
-
-        currentUser =
-            data.user || {
-                email,
-                username: email,
-                name: email
-            };
-
-
-        saveUser();
-
-
-        setAuthMessage(
-            "Login successful."
-        );
-
-
-        setTimeout(
-            openApp,
-            300
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Login error:",
-            error
-        );
-
-        setAuthMessage(
-            error.message ||
-            "Could not connect to NEXORA."
-        );
-
-    } finally {
-
-        loginBtn.disabled =
-            false;
-    }
-}
-
-
-function setAuthMessage(message) {
-
-    if (authMessage) {
-
-        authMessage.textContent =
-            message;
-    }
-}
-
-
-/* =========================================================
+/* ============================================================
    OPEN APP
-   ========================================================= */
+   ============================================================ */
 
 async function openApp() {
 
-    if (!currentUser) {
+    hide($("splashScreen"));
+    hide($("authScreen"));
 
-        showLoginScreen();
+    show($("app"));
 
-        return;
-    }
-
-
-    if (authScreen) {
-
-        authScreen.style.display =
-            "none";
-    }
-
-    if (app) {
-
-        app.style.display =
-            "flex";
-    }
-
-
-    updateProfileInitial();
+    updateProfileUI();
 
     await loadConversations();
 
-    setupSuggestionButtons();
+    if (conversations.length > 0) {
 
-    setupVoiceInput();
+        const firstConversation =
+            conversations[0];
+
+        await loadConversation(
+            firstConversation.id
+        );
+
+    } else {
+
+        await createNewChat(true);
+    }
 }
 
 
-/* =========================================================
-   PROFILE INITIAL
-   ========================================================= */
+/* ============================================================
+   PROFILE UI
+   ============================================================ */
 
-function updateProfileInitial() {
+function updateProfileUI() {
 
-    if (!profileInitial) {
+    if (!currentUser) {
         return;
     }
 
     const name =
-        currentUser?.name ||
-        currentUser?.username ||
-        "U";
+        currentUser.name ||
+        currentUser.username ||
+        currentUser.email ||
+        "User";
 
-    profileInitial.textContent =
+    const initial =
         name
+            .trim()
             .charAt(0)
-            .toUpperCase();
+            .toUpperCase() || "U";
+
+    if ($("profileInitial")) {
+
+        $("profileInitial").textContent =
+            initial;
+    }
+
+    if ($("profileName")) {
+
+        $("profileName").value =
+            currentUser.name ||
+            currentUser.username ||
+            "";
+    }
+
+    if ($("profileEmail")) {
+
+        $("profileEmail").value =
+            currentUser.email ||
+            "";
+    }
 }
 
 
-/* =========================================================
-   DRAWER
-   ========================================================= */
-
-function openDrawer() {
-
-    drawer?.classList.add(
-        "open"
-    );
-
-    drawerOverlay?.classList.add(
-        "open"
-    );
-}
-
-
-function closeDrawerMenu() {
-
-    drawer?.classList.remove(
-        "open"
-    );
-
-    drawerOverlay?.classList.remove(
-        "open"
-    );
-}
-
-
-menuBtn?.addEventListener(
-    "click",
-    openDrawer
-);
-
-
-closeDrawer?.addEventListener(
-    "click",
-    closeDrawerMenu
-);
-
-
-drawerOverlay?.addEventListener(
-    "click",
-    closeDrawerMenu
-);
-
-
-/* =========================================================
+/* ============================================================
    CONVERSATIONS
-   ========================================================= */
+   ============================================================ */
 
 async function loadConversations() {
 
@@ -832,60 +596,39 @@ async function loadConversations() {
         return;
     }
 
-
     try {
 
         const params =
             new URLSearchParams();
 
         if (currentUser.email) {
-
             params.set(
                 "email",
                 currentUser.email
             );
         }
 
-        if (currentUser.username) {
-
+        if (getUserId()) {
             params.set(
-                "username",
-                currentUser.username
+                "user_id",
+                getUserId()
             );
         }
 
+        const query =
+            params.toString();
 
-        const data =
-            await apiRequest(
-                `/conversations?${params}`
-            );
-
+        const data = await api(
+            "/conversations" +
+            (query ? `?${query}` : "")
+        );
 
         conversations =
-            Array.isArray(
-                data.conversations
-            )
+            Array.isArray(data.conversations)
                 ? data.conversations
                 : [];
 
-
-        renderConversationList();
-
-
-        if (conversations.length) {
-
-            await openConversation(
-                conversations[0].id,
-                false
-            );
-
-        } else {
-
-            await createNewConversation(
-                false
-            );
-        }
-
+        renderConversations();
 
     } catch (error) {
 
@@ -894,33 +637,30 @@ async function loadConversations() {
             error
         );
 
-        conversations = [];
-
-        renderConversationList();
-
-        currentConversation = null;
-
-        showWelcome();
+        renderConversations();
     }
 }
 
 
-function renderConversationList() {
+/* ============================================================
+   RENDER CONVERSATIONS
+   ============================================================ */
 
-    if (!conversationList) {
+function renderConversations() {
+
+    const list =
+        $("conversationList");
+
+    if (!list) {
         return;
     }
 
-    conversationList.innerHTML =
-        "";
-
+    list.innerHTML = "";
 
     if (!conversations.length) {
 
         const empty =
-            document.createElement(
-                "div"
-            );
+            document.createElement("div");
 
         empty.className =
             "conversation-empty";
@@ -928,216 +668,115 @@ function renderConversationList() {
         empty.textContent =
             "No conversations yet.";
 
-        conversationList.appendChild(
-            empty
-        );
+        list.appendChild(empty);
 
         return;
     }
-
 
     conversations.forEach(
         conversation => {
 
             const item =
-                document.createElement(
-                    "div"
-                );
+                document.createElement("div");
 
             item.className =
                 "conversation-item";
 
-
             if (
-                currentConversation &&
-                String(
-                    currentConversation.id
-                ) ===
-                String(
-                    conversation.id
-                )
+                String(conversation.id) ===
+                String(currentConversationId)
             ) {
 
-                item.classList.add(
-                    "active"
-                );
+                item.classList.add("active");
             }
 
 
             const button =
-                document.createElement(
-                    "button"
-                );
+                document.createElement("button");
+
+            button.type = "button";
 
             button.className =
                 "conversation-button";
 
 
             const title =
-                document.createElement(
-                    "span"
-                );
+                document.createElement("span");
 
             title.className =
                 "conversation-title";
 
             title.textContent =
                 conversation.title ||
+                conversation.name ||
                 "New chat";
 
-
-            button.appendChild(
-                title
-            );
+            button.appendChild(title);
 
 
             button.addEventListener(
                 "click",
                 async () => {
 
-                    await openConversation(
+                    await loadConversation(
                         conversation.id
                     );
 
-                    closeDrawerMenu();
+                    closeDrawer();
                 }
             );
 
 
             const rename =
-                document.createElement(
-                    "button"
-                );
+                document.createElement("button");
+
+            rename.type = "button";
 
             rename.className =
                 "conversation-rename";
 
-            rename.textContent =
-                "✏️";
-
             rename.title =
                 "Rename conversation";
+
+            rename.textContent =
+                "✎";
 
 
             rename.addEventListener(
                 "click",
                 event => {
 
+                    event.preventDefault();
                     event.stopPropagation();
 
-                    openRenameModal(
-                        conversation
+                    openRename(
+                        conversation.id,
+                        conversation.title ||
+                        conversation.name ||
+                        ""
                     );
                 }
             );
 
 
-            item.appendChild(
-                button
-            );
+            item.appendChild(button);
+            item.appendChild(rename);
 
-            item.appendChild(
-                rename
-            );
-
-            conversationList.appendChild(
-                item
-            );
+            list.appendChild(item);
         }
     );
 }
 
 
-/* =========================================================
-   NEW CONVERSATION
-   ========================================================= */
+/* ============================================================
+   LOAD CONVERSATION
+   ============================================================ */
 
-newChatBtn?.addEventListener(
-    "click",
-    async () => {
+async function loadConversation(id) {
 
-        await createNewConversation(
-            true
-        );
-
-        closeDrawerMenu();
-    }
-);
-
-
-async function createNewConversation(
-    refresh = true
-) {
-
-    if (!currentUser) {
+    if (!currentUser || !id) {
         return;
     }
-
-
-    try {
-
-        const data =
-            await apiRequest(
-                "/conversations/new",
-                {
-                    method: "POST",
-
-                    body:
-                        JSON.stringify({
-                            ...userPayload(),
-                            title: "New chat"
-                        })
-                }
-            );
-
-
-        currentConversation =
-            data.conversation;
-
-
-        if (refresh) {
-
-            conversations.unshift(
-                currentConversation
-            );
-        } else {
-
-            conversations = [
-                currentConversation
-            ];
-        }
-
-
-        renderConversationList();
-
-        showWelcome();
-
-
-    } catch (error) {
-
-        console.error(
-            "New conversation error:",
-            error
-        );
-
-        showWelcome();
-    }
-}
-
-
-/* =========================================================
-   OPEN CONVERSATION
-   ========================================================= */
-
-async function openConversation(
-    conversationId,
-    scroll = true
-) {
-
-    if (!currentUser) {
-        return;
-    }
-
 
     try {
 
@@ -1145,648 +784,605 @@ async function openConversation(
             new URLSearchParams();
 
         if (currentUser.email) {
-
             params.set(
                 "email",
                 currentUser.email
             );
         }
 
-        if (currentUser.username) {
-
+        if (getUserId()) {
             params.set(
-                "username",
-                currentUser.username
+                "user_id",
+                getUserId()
             );
         }
 
+        const query =
+            params.toString();
 
-        const data =
-            await apiRequest(
-                `/conversations/${encodeURIComponent(
-                    conversationId
-                )}?${params}`
-            );
-
-
-        currentConversation =
-            data.conversation;
-
-
-        renderConversationList();
-
-
-        messages.innerHTML =
-            "";
-
-
-        const history =
-            Array.isArray(
-                data.messages
-            )
-                ? data.messages
-                : [];
-
-
-        if (!history.length) {
-
-            showWelcome();
-
-            return;
-        }
-
-
-        hideWelcome();
-
-
-        history.forEach(
-            item => {
-
-                if (
-                    item.role ===
-                    "user"
-                ) {
-
-                    addMessage(
-                        item.content,
-                        "user"
-                    );
-
-                } else if (
-                    item.role ===
-                    "assistant"
-                ) {
-
-                    addMessage(
-                        item.content,
-                        "ai"
-                    );
-
-
-                    if (
-                        item.image_url
-                    ) {
-
-                        addImageMessage(
-                            item.image_url,
-                            item.image_prompt ||
-                            ""
-                        );
-                    }
-                }
-            }
+        const data = await api(
+            "/conversations/" +
+            encodeURIComponent(id) +
+            (query ? `?${query}` : "")
         );
 
+        const conversation =
+            data.conversation ||
+            data;
 
-        if (scroll) {
+        currentConversationId =
+            conversation.id ||
+            id;
 
-            scrollToBottom();
-        }
+        const messages =
+            Array.isArray(data.messages)
+                ? data.messages
+                : Array.isArray(
+                    conversation.messages
+                )
+                    ? conversation.messages
+                    : [];
 
+        renderMessages(messages);
+
+        renderConversations();
 
     } catch (error) {
 
         console.error(
-            "Open conversation error:",
+            "Load conversation error:",
             error
         );
-
-        currentConversation = {
-            id: conversationId,
-            title: "New chat"
-        };
-
-        messages.innerHTML =
-            "";
-
-        showWelcome();
     }
 }
 
 
-/* =========================================================
+/* ============================================================
+   CREATE NEW CHAT
+   ============================================================ */
+
+async function createNewChat(silent = false) {
+
+    if (!currentUser) {
+        return;
+    }
+
+    try {
+
+        const data = await api(
+            "/conversations/new",
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    ...userPayload(),
+                    title: "New chat"
+                })
+            }
+        );
+
+        const conversation =
+            data.conversation;
+
+        if (!conversation) {
+
+            if (!silent) {
+                showWelcome();
+                renderMessages([]);
+            }
+
+            return;
+        }
+
+        currentConversationId =
+            conversation.id;
+
+        conversations =
+            conversations.filter(
+                item =>
+                    String(item.id) !==
+                    String(conversation.id)
+            );
+
+        conversations.unshift(
+            conversation
+        );
+
+        renderConversations();
+        renderMessages([]);
+
+        showWelcome();
+
+        if (!silent) {
+            closeDrawer();
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Create chat error:",
+            error
+        );
+
+        if (!silent) {
+
+            addMessageToUI(
+                "assistant",
+                "I couldn't create a new conversation right now."
+            );
+        }
+    }
+}
+
+
+/* ============================================================
    WELCOME
-   ========================================================= */
+   ============================================================ */
 
 function showWelcome() {
 
-    if (welcomeScreen) {
-
-        welcomeScreen.style.display =
-            "flex";
-    }
-
-    if (messages) {
-
-        messages.innerHTML =
-            "";
-    }
+    show($("welcomeScreen"));
 }
 
 
 function hideWelcome() {
 
-    if (welcomeScreen) {
-
-        welcomeScreen.style.display =
-            "none";
-    }
+    hide($("welcomeScreen"));
 }
 
 
-/* =========================================================
-   SUGGESTIONS
-   ========================================================= */
+/* ============================================================
+   RENDER MESSAGES
+   ============================================================ */
 
-function setupSuggestionButtons() {
+function renderMessages(messages) {
 
-    document
-        .querySelectorAll(
-            ".suggestion"
-        )
-        .forEach(
-            button => {
+    const container =
+        $("messages");
 
-                if (
-                    button.dataset
-                        .nexoraBound
-                ) {
-                    return;
-                }
-
-                button.dataset
-                    .nexoraBound =
-                    "true";
-
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        messageInput.value =
-                            button.textContent.trim();
-
-                        messageInput.focus();
-                    }
-                );
-            }
-        );
-}
-
-
-/* =========================================================
-   MESSAGES
-   ========================================================= */
-
-function createMessageElement(
-    text,
-    sender
-) {
-
-    const wrapper =
-        document.createElement(
-            "div"
-        );
-
-
-    wrapper.className =
-        sender === "user"
-            ? "message user"
-            : "message";
-
-
-    if (sender !== "user") {
-
-        const avatar =
-            document.createElement(
-                "div"
-            );
-
-        avatar.className =
-            "message-avatar";
-
-        avatar.textContent =
-            "N";
-
-        wrapper.appendChild(
-            avatar
-        );
-    }
-
-
-    const bubble =
-        document.createElement(
-            "div"
-        );
-
-    bubble.className =
-        "message-content";
-
-    bubble.textContent =
-        text || "";
-
-
-    wrapper.appendChild(
-        bubble
-    );
-
-
-    return {
-        wrapper,
-        bubble
-    };
-}
-
-
-function addMessage(
-    text,
-    sender
-) {
-
-    if (!messages) {
+    if (!container) {
         return;
     }
 
+    container.innerHTML = "";
+
+    if (
+        !Array.isArray(messages) ||
+        messages.length === 0
+    ) {
+
+        showWelcome();
+        return;
+    }
 
     hideWelcome();
 
+    messages.forEach(
+        message => {
 
-    const item =
-        createMessageElement(
-            text,
-            sender
-        );
+            const role =
+                message.role === "user"
+                    ? "user"
+                    : "assistant";
 
+            const content =
+                message.content ||
+                message.message ||
+                message.text ||
+                "";
 
-    messages.appendChild(
-        item.wrapper
+            const imageUrl =
+                message.image_url ||
+                message.imageUrl ||
+                null;
+
+            addMessageToUI(
+                role,
+                content,
+                imageUrl
+            );
+        }
     );
-
 
     scrollToBottom();
 }
 
 
-function addImageMessage(
-    imageUrl,
-    prompt
+/* ============================================================
+   ADD MESSAGE
+   ============================================================ */
+
+function addMessageToUI(
+    role,
+    content,
+    imageUrl = null
 ) {
 
-    if (!imageUrl || !messages) {
+    const container =
+        $("messages");
+
+    if (!container) {
         return;
     }
 
+    const wrapper =
+        document.createElement("div");
 
-    hideWelcome();
+    wrapper.className =
+        "message";
 
+    if (role === "user") {
+        wrapper.classList.add("user");
+    }
+
+
+    const avatar =
+        document.createElement("div");
+
+    avatar.className =
+        "message-avatar";
+
+
+    if (role === "user") {
+
+        const name =
+            currentUser?.name ||
+            currentUser?.username ||
+            currentUser?.email ||
+            "U";
+
+        avatar.textContent =
+            name
+                .trim()
+                .charAt(0)
+                .toUpperCase() || "U";
+
+    } else {
+
+        avatar.textContent = "N";
+    }
+
+
+    const contentBox =
+        document.createElement("div");
+
+    contentBox.className =
+        "message-content";
+
+    contentBox.textContent =
+        content || "";
+
+
+    if (imageUrl) {
+
+        const image =
+            document.createElement("img");
+
+        image.src = imageUrl;
+
+        image.alt =
+            "NEXORA generated image";
+
+        image.loading = "lazy";
+
+        image.style.display = "block";
+        image.style.width = "100%";
+        image.style.maxWidth = "100%";
+        image.style.borderRadius = "14px";
+        image.style.marginTop =
+            content ? "10px" : "0";
+
+        image.addEventListener(
+            "error",
+            () => {
+                image.remove();
+            }
+        );
+
+        contentBox.appendChild(image);
+    }
+
+
+    if (role === "user") {
+
+        wrapper.appendChild(
+            contentBox
+        );
+
+        wrapper.appendChild(
+            avatar
+        );
+
+    } else {
+
+        wrapper.appendChild(
+            avatar
+        );
+
+        wrapper.appendChild(
+            contentBox
+        );
+    }
+
+    container.appendChild(wrapper);
+}
+
+
+/* ============================================================
+   TYPING INDICATOR
+   ============================================================ */
+
+function showTyping() {
+
+    removeTyping();
+
+    const container =
+        $("messages");
+
+    if (!container) {
+        return;
+    }
 
     const wrapper =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
+
+    wrapper.id =
+        "nexoraTyping";
 
     wrapper.className =
         "message";
 
 
     const avatar =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     avatar.className =
         "message-avatar";
 
-    avatar.textContent =
-        "N";
+    avatar.textContent = "N";
 
 
     const bubble =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     bubble.className =
         "message-content";
 
-
-    const image =
-        document.createElement(
-            "img"
-        );
-
-    image.src =
-        imageUrl;
-
-    image.alt =
-        prompt ||
-        "Generated image";
-
-    image.loading =
-        "lazy";
-
-    image.style.maxWidth =
-        "100%";
-
-    image.style.borderRadius =
-        "12px";
+    bubble.textContent =
+        "NEXORA is thinking...";
 
 
-    bubble.appendChild(
-        image
-    );
+    wrapper.appendChild(avatar);
+    wrapper.appendChild(bubble);
 
-    wrapper.appendChild(
-        avatar
-    );
-
-    wrapper.appendChild(
-        bubble
-    );
-
-    messages.appendChild(
-        wrapper
-    );
-
+    container.appendChild(wrapper);
 
     scrollToBottom();
 }
 
 
+function removeTyping() {
+
+    const typing =
+        $("nexoraTyping");
+
+    if (typing) {
+        typing.remove();
+    }
+}
+
+
+/* ============================================================
+   SEND MESSAGE
+   ============================================================ */
+
+async function sendMessage(customMessage = null) {
+
+    if (
+        !currentUser ||
+        isSending
+    ) {
+        return;
+    }
+
+    const input =
+        $("messageInput");
+
+    if (!input) {
+        return;
+    }
+
+    const message =
+        customMessage !== null
+            ? String(customMessage).trim()
+            : input.value.trim();
+
+    if (!message) {
+        return;
+    }
+
+    isSending = true;
+
+    const sendButton =
+        $("sendBtn");
+
+    if (sendButton) {
+        sendButton.disabled = true;
+    }
+
+
+    input.value = "";
+    input.style.height = "auto";
+
+    hideWelcome();
+
+    addMessageToUI(
+        "user",
+        message
+    );
+
+    showTyping();
+
+    try {
+
+        /*
+           If no conversation exists,
+           create one before sending.
+        */
+
+        if (!currentConversationId) {
+
+            await createNewChat(true);
+        }
+
+
+        const payload = {
+            ...userPayload(),
+
+            message,
+
+            conversation_id:
+                currentConversationId
+        };
+
+
+        const data = await api(
+            "/chat",
+            {
+                method: "POST",
+                body: JSON.stringify(payload)
+            }
+        );
+
+
+        removeTyping();
+
+
+        if (data.conversation_id) {
+
+            currentConversationId =
+                data.conversation_id;
+        }
+
+        if (data.conversation?.id) {
+
+            currentConversationId =
+                data.conversation.id;
+        }
+
+
+        const reply =
+            data.reply ||
+            data.response ||
+            data.answer ||
+            data.message ||
+            "I couldn't generate a response.";
+
+
+        const imageUrl =
+            data.image_url ||
+            data.imageUrl ||
+            data.image?.url ||
+            null;
+
+
+        addMessageToUI(
+            "assistant",
+            reply,
+            imageUrl
+        );
+
+
+        await loadConversations();
+
+        renderConversations();
+
+    } catch (error) {
+
+        removeTyping();
+
+        console.error(
+            "Send message error:",
+            error
+        );
+
+        addMessageToUI(
+            "assistant",
+            "Sorry, I couldn't connect to NEXORA right now. Please try again."
+        );
+
+    } finally {
+
+        isSending = false;
+
+        if (sendButton) {
+            sendButton.disabled = false;
+        }
+
+        input.focus();
+    }
+}
+
+
+/* ============================================================
+   SCROLL
+   ============================================================ */
+
 function scrollToBottom() {
 
-    if (!chatContainer) {
+    const chat =
+        $("chatContainer");
+
+    if (!chat) {
         return;
     }
 
     requestAnimationFrame(
         () => {
 
-            chatContainer.scrollTop =
-                chatContainer.scrollHeight;
+            chat.scrollTop =
+                chat.scrollHeight;
         }
     );
 }
 
 
-/* =========================================================
-   TYPING INDICATOR
-   ========================================================= */
+/* ============================================================
+   DRAWER
+   ============================================================ */
 
-function showTyping() {
+function openDrawer() {
 
-    if (!messages) {
-        return null;
-    }
+    $("drawer")
+        ?.classList
+        .add("open");
 
-
-    const wrapper =
-        document.createElement(
-            "div"
-        );
-
-    wrapper.className =
-        "message";
-
-
-    const avatar =
-        document.createElement(
-            "div"
-        );
-
-    avatar.className =
-        "message-avatar";
-
-    avatar.textContent =
-        "N";
-
-
-    const bubble =
-        document.createElement(
-            "div"
-        );
-
-    bubble.className =
-        "message-content";
-
-
-    bubble.innerHTML =
-        '<span style="opacity:.7;">NEXORA is typing...</span>';
-
-
-    wrapper.appendChild(
-        avatar
-    );
-
-    wrapper.appendChild(
-        bubble
-    );
-
-    messages.appendChild(
-        wrapper
-    );
-
-
-    scrollToBottom();
-
-
-    return wrapper;
+    $("drawerOverlay")
+        ?.classList
+        .add("open");
 }
 
 
-/* =========================================================
-   SEND MESSAGE
-   ========================================================= */
-
-sendBtn?.addEventListener(
-    "click",
-    sendMessage
-);
-
-
-messageInput?.addEventListener(
-    "keydown",
-    event => {
-
-        if (
-            event.key === "Enter" &&
-            !event.shiftKey
-        ) {
-
-            event.preventDefault();
-
-            sendMessage();
-        }
-    }
-);
-
-
-async function sendMessage() {
-
-    const text =
-        messageInput?.value.trim();
-
-
-    if (!text) {
-        return;
-    }
-
-
-    if (!currentUser) {
-
-        showLoginScreen();
-
-        return;
-    }
-
-
-    if (!currentConversation) {
-
-        await createNewConversation(
-            false
-        );
-    }
-
-
-    if (!currentConversation) {
-
-        addMessage(
-            "I couldn't create a conversation. Please try again.",
-            "ai"
-        );
-
-        return;
-    }
-
-
-    hideWelcome();
-
-
-    addMessage(
-        text,
-        "user"
-    );
-
-
-    messageInput.value =
-        "";
-
-
-    if (sendBtn) {
-
-        sendBtn.disabled =
-            true;
-    }
-
-
-    const typing =
-        showTyping();
-
-
-    try {
-
-        const data =
-    await apiRequest(
-        "/chat",
-        {
-            method: "POST",
-
-            body:
-                JSON.stringify({
-                    ...userPayload(),
-
-                    message: text,
-
-                    conversation_id:
-                        currentConversation.id,
-
-                    generate_image:
-                        /generate\s+(an?\s+)?(image|picture|photo|pic)|create\s+(an?\s+)?(image|picture|photo|pic)|make\s+(an?\s+)?(image|picture|photo|pic)|draw\s+(an?\s+)?(image|picture|photo|pic)/i.test(text)
-                })
-        }
-    );
-
-
-        typing?.remove();
-
-
-        if (
-            data.conversation_id &&
-            String(
-                data.conversation_id
-            ) !==
-            String(
-                currentConversation.id
-            )
-        ) {
-
-            currentConversation.id =
-                data.conversation_id;
-        }
-
-
-        if (data.reply) {
-
-            addMessage(
-                data.reply,
-                "ai"
-            );
-        }
-
-
-        if (data.image_url) {
-
-            addImageMessage(
-                data.image_url,
-                data.image_prompt ||
-                text
-            );
-        }
-
-
-        await refreshConversations();
-
-
-    } catch (error) {
-
-        console.error(
-            "Chat error:",
-            error
-        );
-
-
-        typing?.remove();
-
-
-        addMessage(
-            error.message ||
-            "Sorry, I couldn't connect to NEXORA right now.",
-            "ai"
-        );
-
-    } finally {
-
-        if (sendBtn) {
-
-            sendBtn.disabled =
-                false;
-        }
-
-        messageInput?.focus();
-    }
+function closeDrawer() {
+
+    $("drawer")
+        ?.classList
+        .remove("open");
+
+    $("drawerOverlay")
+        ?.classList
+        .remove("open");
 }
 
 
-/* =========================================================
-   REFRESH CONVERSATIONS
-   ========================================================= */
+/* ============================================================
+   PROFILE MODAL
+   ============================================================ */
 
-async function refreshConversations() {
+async function openProfile() {
 
     if (!currentUser) {
         return;
     }
-
 
     try {
 
@@ -1794,392 +1390,239 @@ async function refreshConversations() {
             new URLSearchParams();
 
         if (currentUser.email) {
-
             params.set(
                 "email",
                 currentUser.email
             );
         }
 
-        if (currentUser.username) {
-
+        if (getUserId()) {
             params.set(
-                "username",
-                currentUser.username
+                "user_id",
+                getUserId()
             );
         }
 
+        const query =
+            params.toString();
 
-        const data =
-            await apiRequest(
-                `/conversations?${params}`
+        const data = await api(
+            "/profile" +
+            (query ? `?${query}` : "")
+        );
+
+        const user =
+            data.user ||
+            data.profile;
+
+        if (user) {
+
+            currentUser = user;
+
+            saveUser(
+                currentUser
             );
+        }
 
+        updateProfileUI();
 
-        conversations =
-            data.conversations || [];
-
-
-        renderConversationList();
+        show($("profileModal"));
 
     } catch (error) {
 
         console.error(
-            "Refresh conversations error:",
+            "Profile error:",
             error
         );
+
+        updateProfileUI();
+
+        show($("profileModal"));
     }
 }
 
 
-/* =========================================================
-   RENAME
-   ========================================================= */
+/* ============================================================
+   SAVE PROFILE
+   ============================================================ */
 
-function openRenameModal(
-    conversation
-) {
+async function saveProfile() {
 
-    renameTargetId =
-        conversation.id;
+    const input =
+        $("profileName");
 
-
-    if (renameConversationInput) {
-
-        renameConversationInput.value =
-            conversation.title ||
-            "";
-    }
-
-
-    if (renameModal) {
-
-        renameModal.style.display =
-            "flex";
-    }
-}
-
-
-function closeRename() {
-
-    if (renameModal) {
-
-        renameModal.style.display =
-            "none";
-    }
-
-    renameTargetId =
-        null;
-}
-
-
-closeRenameModal?.addEventListener(
-    "click",
-    closeRename
-);
-
-
-saveConversationNameBtn?.addEventListener(
-    "click",
-    async () => {
-
-        const title =
-            renameConversationInput
-                ?.value.trim();
-
-
-        if (
-            !renameTargetId ||
-            !title
-        ) {
-            return;
-        }
-
-
-        try {
-
-            const data =
-                await apiRequest(
-                    `/conversations/${encodeURIComponent(
-                        renameTargetId
-                    )}`,
-                    {
-                        method: "PATCH",
-
-                        body:
-                            JSON.stringify({
-                                ...userPayload(),
-                                title
-                            })
-                    }
-                );
-
-
-            const updated =
-                data.conversation;
-
-
-            conversations =
-                conversations.map(
-                    item =>
-                        String(item.id) ===
-                        String(
-                            renameTargetId
-                        )
-                            ? updated
-                            : item
-                );
-
-
-            if (
-                currentConversation &&
-                String(
-                    currentConversation.id
-                ) ===
-                String(
-                    renameTargetId
-                )
-            ) {
-
-                currentConversation =
-                    updated;
-            }
-
-
-            renderConversationList();
-
-            closeRename();
-
-        } catch (error) {
-
-            console.error(
-                "Rename error:",
-                error
-            );
-
-            alert(
-                error.message ||
-                "Could not rename conversation."
-            );
-        }
-    }
-);
-
-
-/* =========================================================
-   PROFILE
-   ========================================================= */
-
-profileBtn?.addEventListener(
-    "click",
-    () => {
-
-        closeDrawerMenu();
-
-        openProfile();
-    }
-);
-
-
-topProfileBtn?.addEventListener(
-    "click",
-    openProfile
-);
-
-
-function openProfile() {
-
-    if (!profileModal) {
+    if (!input || !currentUser) {
         return;
     }
 
+    const name =
+        input.value.trim();
 
-    profileName.value =
-        currentUser?.name || "";
-
-
-    profileEmail.value =
-        currentUser?.email || "";
-
-
-    profileModal.style.display =
-        "flex";
-}
-
-
-function closeProfile() {
-
-    if (profileModal) {
-
-        profileModal.style.display =
-            "none";
+    if (!name) {
+        return;
     }
-}
 
+    const button =
+        $("saveProfileBtn");
 
-closeProfileModal?.addEventListener(
-    "click",
-    closeProfile
-);
+    if (button) {
 
+        button.disabled = true;
+        button.textContent = "Saving...";
+    }
 
-saveProfileBtn?.addEventListener(
-    "click",
-    async () => {
+    try {
 
-        const name =
-            profileName?.value.trim();
+        const data = await api(
+            "/profile",
+            {
+                method: "POST",
 
-
-        if (!name) {
-            return;
-        }
-
-
-        try {
-
-            const data =
-                await apiRequest(
-                    "/profile",
-                    {
-                        method: "POST",
-
-                        body:
-                            JSON.stringify({
-                                ...userPayload(),
-                                name
-                            })
-                    }
-                );
-
-
-            if (data.user) {
-
-                currentUser =
-                    data.user;
-
-                saveUser();
-
-                updateProfileInitial();
+                body: JSON.stringify({
+                    ...userPayload(),
+                    name
+                })
             }
+        );
 
+        const user =
+            data.user ||
+            data.profile;
 
-            closeProfile();
+        if (user) {
 
-        } catch (error) {
+            currentUser = user;
 
-            console.error(
-                "Profile save error:",
-                error
-            );
+        } else {
 
-            alert(
-                error.message ||
-                "Could not save profile."
-            );
+            currentUser = {
+                ...currentUser,
+                name
+            };
+        }
+
+        saveUser(
+            currentUser
+        );
+
+        updateProfileUI();
+
+        hide($("profileModal"));
+
+    } catch (error) {
+
+        console.error(
+            "Save profile error:",
+            error
+        );
+
+    } finally {
+
+        if (button) {
+
+            button.disabled = false;
+            button.textContent =
+                "Save Changes";
         }
     }
-);
+}
 
 
-/* =========================================================
+/* ============================================================
    MEMORY
-   ========================================================= */
-
-memoryBtn?.addEventListener(
-    "click",
-    async () => {
-
-        closeDrawerMenu();
-
-        await openMemory();
-    }
-);
-
+   ============================================================ */
 
 async function openMemory() {
 
-    if (!memoryModal) {
+    if (!currentUser) {
         return;
     }
-
-
-    memoryModal.style.display =
-        "flex";
-
-
-    memoryContent.innerHTML =
-        "Loading memory...";
-
 
     try {
 
         const params =
             new URLSearchParams();
 
-        if (currentUser?.email) {
-
+        if (currentUser.email) {
             params.set(
                 "email",
                 currentUser.email
             );
         }
 
-        if (currentUser?.username) {
-
+        if (getUserId()) {
             params.set(
-                "username",
-                currentUser.username
+                "user_id",
+                getUserId()
             );
         }
 
+        const query =
+            params.toString();
 
-        const data =
-            await apiRequest(
-                `/memory?${params}`
-            );
+        const data = await api(
+            "/memory" +
+            (query ? `?${query}` : "")
+        );
 
+        const box =
+            $("memoryContent");
 
-        const saved =
-            data.saved_memories || [];
-
-
-        if (!saved.length) {
-
-            memoryContent.textContent =
-                "NEXORA doesn't have any saved memories about you yet.";
-
+        if (!box) {
             return;
         }
 
+        box.innerHTML = "";
 
-        memoryContent.innerHTML =
-            "";
+        const memories =
+            data.saved_memories ||
+            data.memories ||
+            data.memory ||
+            [];
 
 
-        saved.forEach(
-            memory => {
+        if (
+            typeof memories === "string"
+        ) {
 
-                const item =
-                    document.createElement(
-                        "div"
-                    );
+            box.textContent =
+                memories;
 
-                item.style.padding =
-                    "9px 0";
+        } else if (
+            !Array.isArray(memories) ||
+            memories.length === 0
+        ) {
 
-                item.style.borderBottom =
-                    "1px solid rgba(255,255,255,.06)";
+            box.textContent =
+                "NEXORA has no saved memories yet.";
 
-                item.textContent =
-                    memory;
+        } else {
 
-                memoryContent.appendChild(
-                    item
-                );
-            }
-        );
+            memories.forEach(
+                memory => {
 
+                    const item =
+                        document.createElement("div");
+
+                    item.textContent =
+                        "• " +
+                        (
+                            typeof memory === "string"
+                                ? memory
+                                : memory.text ||
+                                  memory.content ||
+                                  JSON.stringify(memory)
+                        );
+
+                    item.style.marginBottom =
+                        "8px";
+
+                    box.appendChild(item);
+                }
+            );
+        }
+
+        show($("memoryModal"));
 
     } catch (error) {
 
@@ -2187,307 +1630,273 @@ async function openMemory() {
             "Memory error:",
             error
         );
-
-        memoryContent.textContent =
-            error.message ||
-            "Could not load memory.";
     }
 }
 
 
-function closeMemory() {
-
-    if (memoryModal) {
-
-        memoryModal.style.display =
-            "none";
-    }
-}
-
-
-closeMemoryModal?.addEventListener(
-    "click",
-    closeMemory
-);
-
-
-/* =========================================================
+/* ============================================================
    CLEAR MEMORY
-   ========================================================= */
+   ============================================================ */
 
-clearMemoryBtn?.addEventListener(
-    "click",
-    () => {
+async function clearMemory() {
 
-        openConfirm(
-            "Clear Memory",
-            "Are you sure you want NEXORA to forget your saved memories?",
-            clearGlobalMemory
-        );
-    }
-);
-
-
-async function clearGlobalMemory() {
-
-    try {
-
-        await apiRequest(
-            "/memory/clear",
-            {
-                method: "POST",
-
-                body:
-                    JSON.stringify(
-                        userPayload()
-                    )
-            }
-        );
-
-
-        await openMemory();
-
-    } catch (error) {
-
-        alert(
-            error.message ||
-            "Could not clear memory."
-        );
-    }
-}
-
-
-/* =========================================================
-   SWITCH ACCOUNT
-   ========================================================= */
-
-switchAccountBtn?.addEventListener(
-    "click",
-    () => {
-
-        closeDrawerMenu();
-
-        if (accountModal) {
-
-            accountModal.style.display =
-                "flex";
-        }
-    }
-);
-
-
-closeAccountModal?.addEventListener(
-    "click",
-    () => {
-
-        accountModal.style.display =
-            "none";
-    }
-);
-
-
-accountLoginBtn?.addEventListener(
-    "click",
-    () => {
-
-        accountModal.style.display =
-            "none";
-
-        logoutWithoutReload();
-
-        showLoginScreen();
-
-        authScreen.style.display =
-            "flex";
-    }
-);
-
-
-accountSignupBtn?.addEventListener(
-    "click",
-    () => {
-
-        accountModal.style.display =
-            "none";
-
-        logoutWithoutReload();
-
-        showSignupScreen();
-
-        authScreen.style.display =
-            "flex";
-    }
-);
-
-
-function logoutWithoutReload() {
-
-    stopVoice();
-
-    currentUser =
-        null;
-
-    currentConversation =
-        null;
-
-    conversations =
-        [];
-
-    clearSavedUser();
-
-    if (app) {
-
-        app.style.display =
-            "none";
-    }
-}
-
-
-/* =========================================================
-   LOGOUT
-   ========================================================= */
-
-logoutBtn?.addEventListener(
-    "click",
-    () => {
-
-        closeDrawerMenu();
-
-        openConfirm(
-            "Logout",
-            "Are you sure you want to log out of NEXORA?",
-            performLogout
-        );
-    }
-);
-
-
-function performLogout() {
-
-    logoutWithoutReload();
-
-    if (authScreen) {
-
-        authScreen.style.display =
-            "flex";
-    }
-
-    showLoginScreen();
-
-    if (loginPassword) {
-
-        loginPassword.value =
-            "";
-    }
-}
-
-
-/* =========================================================
-   CONFIRMATION
-   ========================================================= */
-
-function openConfirm(
-    title,
-    message,
-    action
-) {
-
-    confirmAction =
-        action;
-
-
-    if (confirmTitle) {
-
-        confirmTitle.textContent =
-            title;
-    }
-
-
-    if (confirmMessage) {
-
-        confirmMessage.textContent =
-            message;
-    }
-
-
-    if (confirmModal) {
-
-        confirmModal.style.display =
-            "flex";
-    }
-}
-
-
-function closeConfirm() {
-
-    if (confirmModal) {
-
-        confirmModal.style.display =
-            "none";
-    }
-
-    confirmAction =
-        null;
-}
-
-
-confirmCancel?.addEventListener(
-    "click",
-    closeConfirm
-);
-
-
-confirmOkay?.addEventListener(
-    "click",
-    async () => {
-
-        const action =
-            confirmAction;
-
-        closeConfirm();
-
-        if (action) {
-
-            await action();
-        }
-    }
-);
-
-
-/* =========================================================
-   VOICE INPUT
-   ========================================================= */
-
-let recognition = null;
-
-let listening = false;
-
-
-function setupVoiceInput() {
-
-    if (!voiceBtn) {
+    if (!currentUser) {
         return;
     }
 
+    const button =
+        $("clearMemoryBtn");
+
+    if (button) {
+        button.disabled = true;
+        button.textContent = "Clearing...";
+    }
+
+    try {
+
+        let cleared = false;
+
+        try {
+
+            await api(
+                "/clear",
+                {
+                    method: "POST",
+                    body:
+                        JSON.stringify(
+                            userPayload()
+                        )
+                }
+            );
+
+            cleared = true;
+
+        } catch (firstError) {
+
+            console.warn(
+                "Primary memory clear route failed. Trying fallback.",
+                firstError
+            );
+
+            await api(
+                "/memory/clear",
+                {
+                    method: "POST",
+                    body:
+                        JSON.stringify(
+                            userPayload()
+                        )
+                }
+            );
+
+            cleared = true;
+        }
+
+        if (cleared) {
+            await openMemory();
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Clear memory error:",
+            error
+        );
+
+    } finally {
+
+        if (button) {
+
+            button.disabled = false;
+            button.textContent =
+                "Clear Memory";
+        }
+    }
+}
+
+
+/* ============================================================
+   RENAME
+   ============================================================ */
+
+function openRename(
+    id,
+    currentTitle = ""
+) {
+
+    renameConversationId = id;
+
+    const input =
+        $("renameConversationInput");
+
+    if (input) {
+
+        input.value =
+            currentTitle || "";
+
+        show($("renameModal"));
+
+        setTimeout(
+            () => {
+
+                input.focus();
+                input.select();
+
+            },
+            50
+        );
+
+    } else {
+
+        show($("renameModal"));
+    }
+}
+
+
+/* ============================================================
+   SAVE RENAME
+   ============================================================ */
+
+async function saveConversationName() {
+
+    const input =
+        $("renameConversationInput");
+
+    if (
+        !input ||
+        !renameConversationId
+    ) {
+        return;
+    }
+
+    const title =
+        input.value.trim();
+
+    if (!title) {
+        return;
+    }
+
+    const button =
+        $("saveConversationNameBtn");
+
+    if (button) {
+
+        button.disabled = true;
+        button.textContent = "Saving...";
+    }
+
+    try {
+
+        await api(
+            "/conversations/" +
+            encodeURIComponent(
+                renameConversationId
+            ),
+            {
+                method: "PATCH",
+
+                body: JSON.stringify({
+                    ...userPayload(),
+                    title
+                })
+            }
+        );
+
+        hide($("renameModal"));
+
+        renameConversationId = null;
+
+        await loadConversations();
+
+        renderConversations();
+
+    } catch (error) {
+
+        console.error(
+            "Rename error:",
+            error
+        );
+
+    } finally {
+
+        if (button) {
+
+            button.disabled = false;
+            button.textContent =
+                "Save Name";
+        }
+    }
+}
+
+
+/* ============================================================
+   ACCOUNT SWITCH
+   ============================================================ */
+
+function openAccountModal() {
+
+    show($("accountModal"));
+}
+
+
+function switchAccount() {
+
+    hide($("accountModal"));
+    hide($("app"));
+
+    show($("authScreen"));
+
+    showAuthScreen(
+        "loginScreen"
+    );
+
+    closeDrawer();
+}
+
+
+function switchToSignup() {
+
+    hide($("accountModal"));
+    hide($("app"));
+
+    show($("authScreen"));
+
+    showAuthScreen(
+        "signupScreen"
+    );
+
+    closeDrawer();
+}
+
+
+/* ============================================================
+   VOICE INPUT
+   ============================================================ */
+
+function voiceInput() {
 
     const SpeechRecognition =
         window.SpeechRecognition ||
         window.webkitSpeechRecognition;
 
-
     if (!SpeechRecognition) {
 
-        voiceBtn.disabled =
-            true;
-
-        voiceBtn.title =
-            "Voice input is not supported.";
+        alert(
+            "Voice input is not supported on this device."
+        );
 
         return;
     }
 
 
     if (recognition) {
+
+        try {
+            recognition.stop();
+        } catch (_) {}
+
+        recognition = null;
+
         return;
     }
 
@@ -2495,52 +1904,60 @@ function setupVoiceInput() {
     recognition =
         new SpeechRecognition();
 
-
     recognition.lang =
         "en-US";
+
+    recognition.interimResults =
+        false;
 
     recognition.continuous =
         false;
 
-    recognition.interimResults =
-        true;
+    recognition.maxAlternatives =
+        1;
 
 
     recognition.onstart =
         () => {
 
-            listening =
-                true;
+            const button =
+                $("voiceBtn");
 
-            voiceBtn.textContent =
-                "⏹️";
+            if (button) {
+                button.textContent =
+                    "🔴";
+            }
         };
 
 
     recognition.onresult =
         event => {
 
-            let text = "";
+            const transcript =
+                event
+                    .results?.[0]?.[0]
+                    ?.transcript || "";
 
+            const input =
+                $("messageInput");
 
-            for (
-                let i =
-                    event.resultIndex;
-
-                i <
-                    event.results.length;
-
-                i++
-            ) {
-
-                text +=
-                    event.results[i][0]
-                        .transcript;
+            if (!input) {
+                return;
             }
 
+            input.value =
+                transcript;
 
-            messageInput.value =
-                text.trim();
+            input.style.height =
+                "auto";
+
+            input.style.height =
+                Math.min(
+                    input.scrollHeight,
+                    150
+                ) + "px";
+
+            input.focus();
         };
 
 
@@ -2548,93 +1965,521 @@ function setupVoiceInput() {
         error => {
 
             console.error(
-                "Voice error:",
+                "Voice recognition error:",
                 error
             );
-
-            listening =
-                false;
-
-            voiceBtn.textContent =
-                "🎤";
         };
 
 
     recognition.onend =
         () => {
 
-            listening =
-                false;
+            const button =
+                $("voiceBtn");
 
-            voiceBtn.textContent =
-                "🎤";
+            if (button) {
+                button.textContent =
+                    "🎤";
+            }
+
+            recognition = null;
         };
+
+
+    try {
+
+        recognition.start();
+
+    } catch (error) {
+
+        console.error(
+            "Voice start error:",
+            error
+        );
+
+        recognition = null;
+    }
 }
 
 
-voiceBtn?.addEventListener(
-    "click",
-    () => {
+/* ============================================================
+   MODALS
+   ============================================================ */
 
-        if (!recognition) {
+function setupModalBackgrounds() {
 
-            setupVoiceInput();
-        }
+    document
+        .querySelectorAll(".modal")
+        .forEach(
+            modal => {
 
+                modal.addEventListener(
+                    "click",
+                    event => {
 
-        if (!recognition) {
-            return;
-        }
+                        if (
+                            event.target === modal
+                        ) {
 
+                            hide(modal);
 
-        if (listening) {
+                            if (
+                                modal.id ===
+                                "renameModal"
+                            ) {
 
-            stopVoice();
-
-        } else {
-
-            try {
-
-                recognition.start();
-
-            } catch (error) {
-
-                console.error(
-                    "Voice start error:",
-                    error
+                                renameConversationId =
+                                    null;
+                            }
+                        }
+                    }
                 );
             }
+        );
+}
+
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+
+function setupEvents() {
+
+    /* =========================
+       AUTH
+    ========================= */
+
+    $("loginBtn")
+        ?.addEventListener(
+            "click",
+            login
+        );
+
+
+    $("signupBtn")
+        ?.addEventListener(
+            "click",
+            signup
+        );
+
+
+    $("showSignup")
+        ?.addEventListener(
+            "click",
+            () =>
+                showAuthScreen(
+                    "signupScreen"
+                )
+        );
+
+
+    $("showLogin")
+        ?.addEventListener(
+            "click",
+            () =>
+                showAuthScreen(
+                    "loginScreen"
+                )
+        );
+
+
+    /* =========================
+       DRAWER
+    ========================= */
+
+    $("menuBtn")
+        ?.addEventListener(
+            "click",
+            openDrawer
+        );
+
+
+    $("closeDrawer")
+        ?.addEventListener(
+            "click",
+            closeDrawer
+        );
+
+
+    $("drawerOverlay")
+        ?.addEventListener(
+            "click",
+            closeDrawer
+        );
+
+
+    $("newChatBtn")
+        ?.addEventListener(
+            "click",
+            () =>
+                createNewChat(false)
+        );
+
+
+    /* =========================
+       CHAT
+    ========================= */
+
+    $("sendBtn")
+        ?.addEventListener(
+            "click",
+            () =>
+                sendMessage()
+        );
+
+
+    $("voiceBtn")
+        ?.addEventListener(
+            "click",
+            voiceInput
+        );
+
+
+    $("messageInput")
+        ?.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key === "Enter" &&
+                    !event.shiftKey
+                ) {
+
+                    event.preventDefault();
+
+                    sendMessage();
+                }
+            }
+        );
+
+
+    $("messageInput")
+        ?.addEventListener(
+            "input",
+            event => {
+
+                event.target.style.height =
+                    "auto";
+
+                event.target.style.height =
+                    Math.min(
+                        event.target.scrollHeight,
+                        140
+                    ) + "px";
+            }
+        );
+
+
+    /* =========================
+       SUGGESTIONS
+    ========================= */
+
+    document
+        .querySelectorAll(".suggestion")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const text =
+                            button.textContent
+                                .trim();
+
+                        sendMessage(text);
+                    }
+                );
+            }
+        );
+
+
+    /* =========================
+       PROFILE
+    ========================= */
+
+    $("profileBtn")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                closeDrawer();
+
+                openProfile();
+            }
+        );
+
+
+    $("topProfileBtn")
+        ?.addEventListener(
+            "click",
+            openProfile
+        );
+
+
+    $("saveProfileBtn")
+        ?.addEventListener(
+            "click",
+            saveProfile
+        );
+
+
+    $("closeProfileModal")
+        ?.addEventListener(
+            "click",
+            () =>
+                hide(
+                    $("profileModal")
+                )
+        );
+
+
+    /* =========================
+       MEMORY
+    ========================= */
+
+    $("memoryBtn")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                closeDrawer();
+
+                openMemory();
+            }
+        );
+
+
+    $("clearMemoryBtn")
+        ?.addEventListener(
+            "click",
+            clearMemory
+        );
+
+
+    $("closeMemoryModal")
+        ?.addEventListener(
+            "click",
+            () =>
+                hide(
+                    $("memoryModal")
+                )
+        );
+
+
+    /* =========================
+       RENAME
+    ========================= */
+
+    $("saveConversationNameBtn")
+        ?.addEventListener(
+            "click",
+            saveConversationName
+        );
+
+
+    $("closeRenameModal")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                renameConversationId =
+                    null;
+
+                hide(
+                    $("renameModal")
+                );
+            }
+        );
+
+
+    /* =========================
+       ACCOUNT
+    ========================= */
+
+    $("switchAccountBtn")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                closeDrawer();
+
+                openAccountModal();
+            }
+        );
+
+
+    $("accountLoginBtn")
+        ?.addEventListener(
+            "click",
+            switchAccount
+        );
+
+
+    $("accountSignupBtn")
+        ?.addEventListener(
+            "click",
+            switchToSignup
+        );
+
+
+    $("closeAccountModal")
+        ?.addEventListener(
+            "click",
+            () =>
+                hide(
+                    $("accountModal")
+                )
+        );
+
+
+    /* =========================
+       LOGOUT
+    ========================= */
+
+    $("logoutBtn")
+        ?.addEventListener(
+            "click",
+            logout
+        );
+
+
+    /* =========================
+       ESCAPE KEY
+    ========================= */
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            if (event.key !== "Escape") {
+                return;
+            }
+
+            closeDrawer();
+
+            document
+                .querySelectorAll(".modal")
+                .forEach(
+                    modal => hide(modal)
+                );
+
+            renameConversationId = null;
         }
-    }
-);
+    );
 
 
-function stopVoice() {
+    setupModalBackgrounds();
+}
 
-    if (!recognition) {
+
+/* ============================================================
+   AUTH ENTER KEYS
+   ============================================================ */
+
+function setupAuthEnterKeys() {
+
+    $("loginPassword")
+        ?.addEventListener(
+            "keydown",
+            event => {
+
+                if (event.key === "Enter") {
+
+                    event.preventDefault();
+
+                    login();
+                }
+            }
+        );
+
+
+    $("signupPassword")
+        ?.addEventListener(
+            "keydown",
+            event => {
+
+                if (event.key === "Enter") {
+
+                    event.preventDefault();
+
+                    signup();
+                }
+            }
+        );
+
+
+    $("renameConversationInput")
+        ?.addEventListener(
+            "keydown",
+            event => {
+
+                if (event.key === "Enter") {
+
+                    event.preventDefault();
+
+                    saveConversationName();
+                }
+            }
+        );
+}
+
+
+/* ============================================================
+   START NEXORA
+   ============================================================ */
+
+async function startNexora() {
+
+    setupEvents();
+
+    setupAuthEnterKeys();
+
+
+    const savedUser =
+        loadUser();
+
+
+    if (savedUser) {
+
+        currentUser =
+            savedUser;
+
+        hide($("splashScreen"));
+
+        await openApp();
+
         return;
     }
 
 
-    try {
-        recognition.stop();
-    } catch {}
+    /*
+       Show splash first,
+       then reveal login.
+    */
 
+    setTimeout(
+        () => {
 
-    listening =
-        false;
+            hide($("splashScreen"));
 
+            show($("authScreen"));
 
-    if (voiceBtn) {
+            showAuthScreen(
+                "loginScreen"
+            );
 
-        voiceBtn.textContent =
-            "🎤";
-    }
+        },
+        1200
+    );
 }
 
 
-/* =========================================================
+/* ============================================================
    START
-   ========================================================= */
+   ============================================================ */
 
-initializeApp();
+document.addEventListener(
+    "DOMContentLoaded",
+    startNexora
+);
