@@ -1,5 +1,5 @@
 # ============================================================
-# NEXORA AI 13 — MULTI-CONVERSATION AI BACKEND
+# NEXORA AI 14 — USERNAME AUTHENTICATION BACKEND
 # DAVIDS DIGITALS LTD.©
 # ============================================================
 
@@ -8,12 +8,9 @@ import json
 import uuid
 import hashlib
 import secrets
-import html
-import urllib.request
-import urllib.error
+import re
 
-from datetime import datetime, timezone, timedelta
-from urllib.parse import quote
+from datetime import datetime, timezone
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -54,11 +51,9 @@ CORS(
 
 USERS_FILE = "users.json"
 MEMORY_FILE = "nexora_users_memory.json"
-RESET_FILE = "password_reset_tokens.json"
 
 MAX_SAVED_MEMORIES = 50
 OPENAI_HISTORY_LIMIT = 12
-RESET_TOKEN_MINUTES = 30
 
 OPENAI_MODEL = os.getenv(
     "OPENAI_MODEL",
@@ -79,26 +74,6 @@ OPENAI_API_KEY = os.getenv(
     "OPENAI_API_KEY",
     ""
 )
-
-# ============================================================
-# PASSWORD RESET EMAIL — RESEND
-# ============================================================
-
-RESEND_API_KEY = os.getenv(
-    "RESEND_API_KEY",
-    ""
-)
-
-RESEND_FROM = os.getenv(
-    "RESEND_FROM",
-    "onboarding@resend.dev"
-)
-
-# URL of the website where the reset page lives.
-FRONTEND_URL = os.getenv(
-    "FRONTEND_URL",
-    "https://nexora-ai.netlify.app"
-).rstrip("/")
 
 
 # ============================================================
@@ -131,11 +106,43 @@ def safe_text(value, maximum=12000):
     return str(value).strip()[:maximum]
 
 
-def normalize_email(value):
-    return safe_text(value, 254).lower()
+# ============================================================
+# USERNAME
+# ============================================================
 
+def normalize_username(value):
+    username = safe_text(
+        value,
+        30
+    ).lower()
+
+    return username
+
+
+def valid_username(username):
+    if not username:
+        return False
+
+    if len(username) < 3:
+        return False
+
+    if len(username) > 30:
+        return False
+
+    return bool(
+        re.fullmatch(
+            r"[a-z0-9_]+",
+            username
+        )
+    )
+
+
+# ============================================================
+# PASSWORD HASHING
+# ============================================================
 
 def hash_password(password):
+
     salt = secrets.token_hex(16)
 
     digest = hashlib.pbkdf2_hmac(
@@ -149,8 +156,13 @@ def hash_password(password):
 
 
 def verify_password(password, stored):
+
     try:
-        salt, digest = stored.split("$", 1)
+
+        salt, digest = stored.split(
+            "$",
+            1
+        )
 
         check = hashlib.pbkdf2_hmac(
             "sha256",
@@ -165,14 +177,21 @@ def verify_password(password, stored):
         )
 
     except Exception:
+
         return False
 
 
+# ============================================================
+# JSON STORAGE
+# ============================================================
+
 def load_json(path, default):
+
     if not os.path.exists(path):
         return default
 
     try:
+
         with open(
             path,
             "r",
@@ -182,10 +201,12 @@ def load_json(path, default):
             return json.load(file)
 
     except Exception:
+
         return default
 
 
 def save_json(path, data):
+
     temp = path + ".tmp"
 
     with open(
@@ -208,6 +229,7 @@ def save_json(path, data):
 
 
 def get_users_json():
+
     return load_json(
         USERS_FILE,
         {}
@@ -215,49 +237,15 @@ def get_users_json():
 
 
 def save_users_json(users):
+
     save_json(
         USERS_FILE,
         users
     )
 
 
-def db_enabled():
-    return bool(
-        DATABASE_URL
-        and psycopg2
-    )
-
-
-def get_db():
-    return psycopg2.connect(
-        DATABASE_URL
-    )
-
-
-# ============================================================
-# MEMORY
-# ============================================================
-
-def default_memory():
-    return {
-        "last_question": "",
-        "last_topic": "",
-        "last_subject": "",
-        "last_answer": "",
-        "last_intent": "",
-        "conversation_count": 0,
-        "saved_memories": [],
-        "conversation_history": [],
-        "conversations": [],
-        "personality": {
-            "style": "friendly",
-            "verbosity": "balanced"
-        },
-        "last_updated": ""
-    }
-
-
 def get_memories_json():
+
     return load_json(
         MEMORY_FILE,
         {}
@@ -265,6 +253,7 @@ def get_memories_json():
 
 
 def save_memories_json(memories):
+
     save_json(
         MEMORY_FILE,
         memories
@@ -274,6 +263,21 @@ def save_memories_json(memories):
 # ============================================================
 # DATABASE
 # ============================================================
+
+def db_enabled():
+
+    return bool(
+        DATABASE_URL
+        and psycopg2
+    )
+
+
+def get_db():
+
+    return psycopg2.connect(
+        DATABASE_URL
+    )
+
 
 def init_db():
 
@@ -286,6 +290,10 @@ def init_db():
 
         with conn.cursor() as cur:
 
+            # ------------------------------------------------
+            # USERS
+            # ------------------------------------------------
+
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     username TEXT PRIMARY KEY,
@@ -294,6 +302,8 @@ def init_db():
                 )
             """)
 
+            # Keep these old columns if they already exist.
+            # NEXORA no longer uses email authentication.
             cur.execute("""
                 ALTER TABLE users
                 ADD COLUMN IF NOT EXISTS email TEXT
@@ -304,12 +314,9 @@ def init_db():
                 ADD COLUMN IF NOT EXISTS name TEXT
             """)
 
-            cur.execute("""
-                CREATE UNIQUE INDEX IF NOT EXISTS
-                idx_users_email
-                ON users(email)
-                WHERE email IS NOT NULL
-            """)
+            # ------------------------------------------------
+            # MEMORY
+            # ------------------------------------------------
 
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS user_memory (
@@ -319,6 +326,10 @@ def init_db():
                     memory JSONB NOT NULL
                 )
             """)
+
+            # ------------------------------------------------
+            # CONVERSATIONS
+            # ------------------------------------------------
 
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS conversations (
@@ -331,6 +342,10 @@ def init_db():
                     updated_at TEXT NOT NULL
                 )
             """)
+
+            # ------------------------------------------------
+            # MESSAGES
+            # ------------------------------------------------
 
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS messages (
@@ -358,38 +373,10 @@ def init_db():
                 ON messages(conversation_id, id)
             """)
 
-            # ==================================================
-            # PASSWORD RESET TOKENS
-            # ==================================================
-
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS password_reset_tokens (
-                    id BIGSERIAL PRIMARY KEY,
-                    username TEXT NOT NULL
-                    REFERENCES users(username)
-                    ON DELETE CASCADE,
-                    token_hash TEXT NOT NULL UNIQUE,
-                    expires_at TEXT NOT NULL,
-                    used_at TEXT,
-                    created_at TEXT NOT NULL
-                )
-            """)
-
-            cur.execute("""
-                CREATE INDEX IF NOT EXISTS
-                idx_password_reset_username
-                ON password_reset_tokens(username)
-            """)
-
-            cur.execute("""
-                CREATE INDEX IF NOT EXISTS
-                idx_password_reset_expiry
-                ON password_reset_tokens(expires_at)
-            """)
-
         conn.commit()
 
     finally:
+
         conn.close()
 
 
@@ -409,14 +396,18 @@ except Exception as error:
 # USERS
 # ============================================================
 
-def find_user_by_email(email):
+def get_user_by_identity(identity):
 
-    email = normalize_email(
-        email
+    username = normalize_username(
+        identity
     )
 
-    if not email:
+    if not username:
         return None
+
+    # --------------------------------------------------------
+    # POSTGRESQL
+    # --------------------------------------------------------
 
     if db_enabled():
 
@@ -431,71 +422,45 @@ def find_user_by_email(email):
                 cur.execute("""
                     SELECT
                         username,
-                        email,
                         name,
                         password_hash,
                         created_at
                     FROM users
-                    WHERE LOWER(email)=LOWER(%s)
-                       OR LOWER(username)=LOWER(%s)
+                    WHERE LOWER(username)=LOWER(%s)
                     LIMIT 1
                 """, (
-                    email,
-                    email
+                    username,
                 ))
 
                 row = cur.fetchone()
 
-                return (
-                    dict(row)
-                    if row
-                    else None
-                )
+                if not row:
+                    return None
+
+                return dict(row)
 
         finally:
+
             conn.close()
+
+    # --------------------------------------------------------
+    # JSON FALLBACK
+    # --------------------------------------------------------
 
     users = get_users_json()
 
-    for username, user in users.items():
+    # New format
+    user = users.get(
+        username
+    )
 
-        if normalize_email(
-            user.get(
-                "email",
-                ""
-            )
-        ) == email:
-
-            return {
-                "username": username,
-                "email": user.get(
-                    "email",
-                    email
-                ),
-                "name": user.get(
-                    "name",
-                    ""
-                ),
-                "password_hash": user.get(
-                    "password_hash",
-                    ""
-                ),
-                "created_at": user.get(
-                    "created_at",
-                    ""
-                )
-            }
-
-    if email in users:
-
-        user = users[email]
+    if user:
 
         return {
-            "username": email,
-            "email": email,
+            "username": username,
             "name": user.get(
                 "name",
-                ""
+                username
             ),
             "password_hash": user.get(
                 "password_hash",
@@ -507,88 +472,39 @@ def find_user_by_email(email):
             )
         }
 
+    # Try case-insensitive lookup
+    for key, item in users.items():
+
+        if normalize_username(
+            key
+        ) == username:
+
+            return {
+                "username": key,
+                "name": item.get(
+                    "name",
+                    key
+                ),
+                "password_hash": item.get(
+                    "password_hash",
+                    ""
+                ),
+                "created_at": item.get(
+                    "created_at",
+                    ""
+                )
+            }
+
     return None
 
 
-def get_user_by_identity(identity):
+def username_exists(username):
 
-    identity = safe_text(
-        identity,
-        254
-    )
-
-    if not identity:
-        return None
-
-    if "@" in identity:
-
-        return find_user_by_email(
-            identity
+    return bool(
+        get_user_by_identity(
+            username
         )
-
-    if db_enabled():
-
-        conn = get_db()
-
-        try:
-
-            with conn.cursor(
-                cursor_factory=RealDictCursor
-            ) as cur:
-
-                cur.execute("""
-                    SELECT
-                        username,
-                        email,
-                        name,
-                        password_hash,
-                        created_at
-                    FROM users
-                    WHERE LOWER(username)=LOWER(%s)
-                    LIMIT 1
-                """, (
-                    identity,
-                ))
-
-                row = cur.fetchone()
-
-                return (
-                    dict(row)
-                    if row
-                    else None
-                )
-
-        finally:
-            conn.close()
-
-    users = get_users_json()
-
-    user = users.get(
-        identity
     )
-
-    if not user:
-        return None
-
-    return {
-        "username": identity,
-        "email": user.get(
-            "email",
-            identity
-        ),
-        "name": user.get(
-            "name",
-            ""
-        ),
-        "password_hash": user.get(
-            "password_hash",
-            ""
-        ),
-        "created_at": user.get(
-            "created_at",
-            ""
-        )
-    }
 
 
 def public_user(user):
@@ -596,21 +512,25 @@ def public_user(user):
     if not user:
         return None
 
+    username = user.get(
+        "username",
+        ""
+    )
+
+    name = user.get(
+        "name",
+        ""
+    )
+
     return {
-        "name": user.get(
-            "name",
-            ""
-        ),
-        "email": user.get(
-            "email",
-            ""
-        ),
-        "username": user.get(
-            "username",
-            ""
-        )
+        "username": username,
+        "name": name or username
     }
 
+
+# ============================================================
+# REQUEST USER
+# ============================================================
 
 def get_request_user():
 
@@ -618,730 +538,89 @@ def get_request_user():
         silent=True
     ) or {}
 
-    email = normalize_email(
-        data.get("email")
+    username = normalize_username(
+        data.get("username")
     )
 
-    username = safe_text(
-        data.get("username"),
-        254
-    )
-
-    user_data = data.get(
+    nested_user = data.get(
         "user"
     )
 
-    if isinstance(
-        user_data,
-        dict
+    if (
+        not username
+        and isinstance(
+            nested_user,
+            dict
+        )
     ):
 
-        if not email:
-
-            email = normalize_email(
-                user_data.get(
-                    "email"
-                )
+        username = normalize_username(
+            nested_user.get(
+                "username"
             )
-
-        if not username:
-
-            username = safe_text(
-                user_data.get(
-                    "username"
-                ),
-                254
-            )
-
-    if email:
-
-        user = find_user_by_email(
-            email
         )
 
-        if user:
-            return user
+    if not username:
+        return None
 
-    if username:
-
-        user = get_user_by_identity(
-            username
-        )
-
-        if user:
-            return user
-
-    return None
+    return get_user_by_identity(
+        username
+    )
 
 
 def get_query_user():
 
-    email = normalize_email(
-        request.args.get(
-            "email"
-        )
-    )
-
-    username = safe_text(
+    username = normalize_username(
         request.args.get(
             "username"
-        ),
-        254
-    )
-
-    if email:
-
-        user = find_user_by_email(
-            email
         )
-
-        if user:
-            return user
-
-    if username:
-
-        user = get_user_by_identity(
-            username
-        )
-
-        if user:
-            return user
-
-    return None
-
-
-# ============================================================
-# PASSWORD RESET HELPERS
-# ============================================================
-
-def hash_reset_token(token):
-
-    return hashlib.sha256(
-        token.encode("utf-8")
-    ).hexdigest()
-
-
-def create_reset_token(username):
-
-    token = secrets.token_urlsafe(
-        48
     )
 
-    token_hash = hash_reset_token(
-        token
-    )
-
-    created_at = now_iso()
-
-    expires_at = (
-        datetime.now(
-            timezone.utc
-        )
-        + timedelta(
-            minutes=RESET_TOKEN_MINUTES
-        )
-    ).isoformat()
-
-    if db_enabled():
-
-        conn = get_db()
-
-        try:
-
-            with conn.cursor() as cur:
-
-                cur.execute("""
-                    DELETE FROM password_reset_tokens
-                    WHERE username=%s
-                """, (
-                    username,
-                ))
-
-                cur.execute("""
-                    INSERT INTO password_reset_tokens(
-                        username,
-                        token_hash,
-                        expires_at,
-                        created_at
-                    )
-                    VALUES(%s, %s, %s, %s)
-                """, (
-                    username,
-                    token_hash,
-                    expires_at,
-                    created_at
-                ))
-
-            conn.commit()
-
-        finally:
-            conn.close()
-
-    else:
-
-        tokens = load_json(
-            RESET_FILE,
-            []
-        )
-
-        tokens = [
-            item
-            for item in tokens
-            if item.get(
-                "username"
-            ) != username
-        ]
-
-        tokens.append({
-            "username": username,
-            "token_hash": token_hash,
-            "expires_at": expires_at,
-            "used_at": None,
-            "created_at": created_at
-        })
-
-        save_json(
-            RESET_FILE,
-            tokens
-        )
-
-    return token
-
-
-# ============================================================
-# RESEND PASSWORD RESET EMAIL
-# ============================================================
-
-def send_reset_email(
-    email,
-    name,
-    token
-):
-
-    reset_url = (
-        FRONTEND_URL
-        + "/?reset_token="
-        + quote(token)
-    )
-
-    if not (
-        RESEND_API_KEY
-        and RESEND_FROM
-    ):
-
-        print(
-            "PASSWORD RESET EMAIL NOT CONFIGURED."
-        )
-
-        print(
-            "Reset URL:",
-            reset_url
-        )
-
-        return False
-
-    safe_name = html.escape(
-        name or "there"
-    )
-
-    safe_reset_url = html.escape(
-        reset_url,
-        quote=True
-    )
-
-    subject = (
-        "Reset your NEXORA AI password"
-    )
-
-    text_body = f"""
-Hello {name or "there"},
-
-We received a request to reset your NEXORA AI password.
-
-Use the link below to create a new password:
-
-{reset_url}
-
-This reset link expires in {RESET_TOKEN_MINUTES} minutes
-and can only be used once.
-
-If you did not request this, you can safely ignore this email.
-
-NEXORA AI
-DAVIDS DIGITALS LTD.©
-""".strip()
-
-    html_body = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>NEXORA AI Password Reset</title>
-</head>
-
-<body style="
-    margin:0;
-    padding:0;
-    background:#05070d;
-    font-family:Arial,Helvetica,sans-serif;
-">
-
-    <div style="
-        max-width:600px;
-        margin:40px auto;
-        background:#0b101a;
-        border:1px solid #1c2a3a;
-        border-radius:18px;
-        padding:35px;
-        color:#ffffff;
-    ">
-
-        <h1 style="
-            margin:0 0 20px;
-            color:#36d9ff;
-            font-size:28px;
-        ">
-            NEXORA AI
-        </h1>
-
-        <h2 style="
-            color:#ffffff;
-            margin-bottom:15px;
-        ">
-            Password Reset
-        </h2>
-
-        <p style="
-            color:#cbd5e1;
-            line-height:1.7;
-        ">
-            Hello {safe_name},
-        </p>
-
-        <p style="
-            color:#cbd5e1;
-            line-height:1.7;
-        ">
-            We received a request to reset your NEXORA AI password.
-        </p>
-
-        <p style="
-            color:#cbd5e1;
-            line-height:1.7;
-        ">
-            Click the button below to create a new password.
-        </p>
-
-        <div style="
-            margin:30px 0;
-            text-align:center;
-        ">
-
-            <a
-                href="{safe_reset_url}"
-                style="
-                    display:inline-block;
-                    padding:14px 25px;
-                    background:#36d9ff;
-                    color:#001018;
-                    text-decoration:none;
-                    border-radius:10px;
-                    font-weight:bold;
-                "
-            >
-                Reset Password
-            </a>
-
-        </div>
-
-        <p style="
-            color:#94a3b8;
-            line-height:1.6;
-            font-size:14px;
-        ">
-            This reset link expires in
-            {RESET_TOKEN_MINUTES} minutes
-            and can only be used once.
-        </p>
-
-        <p style="
-            color:#94a3b8;
-            line-height:1.6;
-            font-size:14px;
-        ">
-            If you did not request this password reset,
-            you can safely ignore this email.
-        </p>
-
-        <hr style="
-            border:0;
-            border-top:1px solid #1c2a3a;
-            margin:30px 0;
-        ">
-
-        <p style="
-            color:#64748b;
-            font-size:13px;
-            text-align:center;
-        ">
-            NEXORA AI<br>
-            DAVIDS DIGITALS LTD.©
-        </p>
-
-    </div>
-
-</body>
-</html>
-""".strip()
-
-    payload = {
-        "from": RESEND_FROM,
-        "to": [email],
-        "subject": subject,
-        "text": text_body,
-        "html": html_body,
-        "tags": [
-            {
-                "name": "category",
-                "value": "password_reset"
-            }
-        ]
-    }
-
-    body = json.dumps(
-        payload
-    ).encode("utf-8")
-
-    req = urllib.request.Request(
-        "https://api.resend.com/emails",
-        data=body,
-        method="POST"
-    )
-
-    req.add_header(
-        "Authorization",
-        f"Bearer {RESEND_API_KEY}"
-    )
-
-    req.add_header(
-        "Content-Type",
-        "application/json"
-    )
-
-    req.add_header(
-        "Accept",
-        "application/json"
-    )
-
-    try:
-
-        with urllib.request.urlopen(
-            req,
-            timeout=20
-        ) as response:
-
-            response_body = response.read().decode(
-                "utf-8",
-                errors="replace"
-            )
-
-            print(
-                "Password reset email sent:",
-                response_body
-            )
-
-            return True
-
-    except urllib.error.HTTPError as error:
-
-        error_body = ""
-
-        try:
-            error_body = error.read().decode(
-                "utf-8",
-                errors="replace"
-            )
-        except Exception:
-            pass
-
-        print(
-            "Resend email HTTP error:",
-            error.code,
-            error_body
-        )
-
-        return False
-
-    except Exception as error:
-
-        print(
-            "Password reset email error:",
-            error
-        )
-
-        return False
-
-
-def verify_and_consume_reset_token(
-    token
-):
-
-    token = safe_text(
-        token,
-        500
-    )
-
-    if not token:
+    if not username:
         return None
 
-    token_hash = hash_reset_token(
-        token
+    return get_user_by_identity(
+        username
     )
-
-    current_time = datetime.now(
-        timezone.utc
-    )
-
-    if db_enabled():
-
-        conn = get_db()
-
-        try:
-
-            with conn.cursor(
-                cursor_factory=RealDictCursor
-            ) as cur:
-
-                cur.execute("""
-                    SELECT
-                        id,
-                        username,
-                        expires_at,
-                        used_at
-                    FROM password_reset_tokens
-                    WHERE token_hash=%s
-                    LIMIT 1
-                """, (
-                    token_hash,
-                ))
-
-                row = cur.fetchone()
-
-                if not row:
-                    return None
-
-                if row["used_at"]:
-                    return None
-
-                try:
-
-                    expires = datetime.fromisoformat(
-                        row["expires_at"]
-                    )
-
-                    if expires.tzinfo is None:
-
-                        expires = expires.replace(
-                            tzinfo=timezone.utc
-                        )
-
-                except Exception:
-
-                    return None
-
-                if expires <= current_time:
-                    return None
-
-                return {
-                    "id": row["id"],
-                    "username": row["username"]
-                }
-
-        finally:
-            conn.close()
-
-    tokens = load_json(
-        RESET_FILE,
-        []
-    )
-
-    for item in tokens:
-
-        if item.get(
-            "token_hash"
-        ) != token_hash:
-
-            continue
-
-        if item.get("used_at"):
-            return None
-
-        try:
-
-            expires = datetime.fromisoformat(
-                item.get(
-                    "expires_at",
-                    ""
-                )
-            )
-
-            if expires.tzinfo is None:
-
-                expires = expires.replace(
-                    tzinfo=timezone.utc
-                )
-
-        except Exception:
-
-            return None
-
-        if expires <= current_time:
-            return None
-
-        return item
-
-    return None
-
-
-def consume_reset_token(token):
-
-    token_hash = hash_reset_token(
-        token
-    )
-
-    used_at = now_iso()
-
-    if db_enabled():
-
-        conn = get_db()
-
-        try:
-
-            with conn.cursor() as cur:
-
-                cur.execute("""
-                    UPDATE password_reset_tokens
-                    SET used_at=%s
-                    WHERE token_hash=%s
-                      AND used_at IS NULL
-                """, (
-                    used_at,
-                    token_hash
-                ))
-
-            conn.commit()
-
-        finally:
-            conn.close()
-
-        return
-
-    tokens = load_json(
-        RESET_FILE,
-        []
-    )
-
-    for item in tokens:
-
-        if item.get(
-            "token_hash"
-        ) == token_hash:
-
-            item["used_at"] = used_at
-
-    save_json(
-        RESET_FILE,
-        tokens
-    )
-
-
-def update_password_for_user(
-    username,
-    new_password
-):
-
-    password_hash = hash_password(
-        new_password
-    )
-
-    if db_enabled():
-
-        conn = get_db()
-
-        try:
-
-            with conn.cursor() as cur:
-
-                cur.execute("""
-                    UPDATE users
-                    SET password_hash=%s
-                    WHERE username=%s
-                """, (
-                    password_hash,
-                    username
-                ))
-
-                cur.execute("""
-                    UPDATE password_reset_tokens
-                    SET used_at=%s
-                    WHERE username=%s
-                      AND used_at IS NULL
-                """, (
-                    now_iso(),
-                    username
-                ))
-
-            conn.commit()
-
-        finally:
-            conn.close()
-
-        return True
-
-    users = get_users_json()
-
-    if username not in users:
-        return False
-
-    users[username][
-        "password_hash"
-    ] = password_hash
-
-    save_users_json(
-        users
-    )
-
-    tokens = load_json(
-        RESET_FILE,
-        []
-    )
-
-    for item in tokens:
-
-        if item.get(
-            "username"
-        ) == username:
-
-            item["used_at"] = now_iso()
-
-    save_json(
-        RESET_FILE,
-        tokens
-    )
-
-    return True
 
 
 # ============================================================
-# MEMORY
+# DEFAULT MEMORY
+# ============================================================
+
+def default_memory():
+
+    return {
+        "last_question": "",
+        "last_topic": "",
+        "last_subject": "",
+        "last_answer": "",
+        "last_intent": "",
+        "conversation_count": 0,
+        "saved_memories": [],
+        "conversation_history": [],
+        "conversations": [],
+        "personality": {
+            "style": "friendly",
+            "verbosity": "balanced"
+        },
+        "last_updated": ""
+    }
+
+
+# ============================================================
+# USER MEMORY
 # ============================================================
 
 def get_user_memory(username):
 
-    username = safe_text(
-        username,
-        254
+    username = normalize_username(
+        username
     )
+
+    # --------------------------------------------------------
+    # POSTGRESQL
+    # --------------------------------------------------------
 
     if db_enabled():
 
@@ -1365,9 +644,7 @@ def get_user_memory(username):
 
                 if row:
 
-                    memory = row[
-                        "memory"
-                    ]
+                    memory = row["memory"]
 
                     if not isinstance(
                         memory,
@@ -1398,7 +675,12 @@ def get_user_memory(username):
                 return memory
 
         finally:
+
             conn.close()
+
+    # --------------------------------------------------------
+    # JSON
+    # --------------------------------------------------------
 
     memories = get_memories_json()
 
@@ -1424,15 +706,20 @@ def get_user_memory(username):
 
     defaults = default_memory()
 
+    changed = False
+
     for key, value in defaults.items():
 
         if key not in memory:
 
             memory[key] = value
+            changed = True
 
-    save_memories_json(
-        memories
-    )
+    if changed:
+
+        save_memories_json(
+            memories
+        )
 
     return memory
 
@@ -1442,9 +729,8 @@ def save_user_memory(
     memory
 ):
 
-    username = safe_text(
-        username,
-        254
+    username = normalize_username(
+        username
     )
 
     if db_enabled():
@@ -1472,13 +758,16 @@ def save_user_memory(
             conn.commit()
 
         finally:
+
             conn.close()
 
         return
 
     memories = get_memories_json()
 
-    memories[username] = memory
+    memories[
+        username
+    ] = memory
 
     save_memories_json(
         memories
@@ -1486,7 +775,7 @@ def save_user_memory(
 
 
 # ============================================================
-# CONVERSATIONS
+# CONVERSATION HELPERS
 # ============================================================
 
 def title_from_message(message):
@@ -1522,6 +811,10 @@ def title_from_message(message):
 
 
 def get_conversations(username):
+
+    username = normalize_username(
+        username
+    )
 
     if db_enabled():
 
@@ -1567,6 +860,7 @@ def get_conversations(username):
                 ]
 
         finally:
+
             conn.close()
 
     memory = get_user_memory(
@@ -1591,6 +885,10 @@ def find_conversation(
     username,
     conversation_id
 ):
+
+    username = normalize_username(
+        username
+    )
 
     conversation_id = safe_text(
         conversation_id,
@@ -1649,6 +947,7 @@ def find_conversation(
                 }
 
         finally:
+
             conn.close()
 
     memory = get_user_memory(
@@ -1673,6 +972,10 @@ def create_conversation(
     username,
     title="New chat"
 ):
+
+    username = normalize_username(
+        username
+    )
 
     conversation_id = new_id()
 
@@ -1725,6 +1028,7 @@ def create_conversation(
             conn.commit()
 
         finally:
+
             conn.close()
 
         return conversation
@@ -1827,6 +1131,7 @@ def get_messages(
                 ]
 
         finally:
+
             conn.close()
 
     return conversation.get(
@@ -1923,6 +1228,7 @@ def add_message(
             }
 
         finally:
+
             conn.close()
 
     memory = get_user_memory(
@@ -2068,6 +1374,7 @@ def update_conversation_title(
             }
 
         finally:
+
             conn.close()
 
     memory = get_user_memory(
@@ -2130,6 +1437,7 @@ def extract_memory(message):
         trigger in lowered
         for trigger in triggers
     ):
+
         return None
 
     return text
@@ -2217,7 +1525,7 @@ def save_context(
 
 
 # ============================================================
-# AI
+# AI TOPIC DETECTION
 # ============================================================
 
 def detect_topic(message):
@@ -2413,6 +1721,10 @@ Important:
 """.strip()
 
 
+# ============================================================
+# OPENAI RESPONSE
+# ============================================================
+
 def generate_openai_response(
     username,
     message,
@@ -2498,6 +1810,7 @@ def generate_openai_response(
         )
 
         if answer:
+
             return answer.strip()
 
     except Exception as error:
@@ -2509,6 +1822,10 @@ def generate_openai_response(
 
     return None
 
+
+# ============================================================
+# FALLBACK AI
+# ============================================================
 
 def fallback_response(
     username,
@@ -2646,13 +1963,8 @@ def signup():
         silent=True
     ) or {}
 
-    name = safe_text(
-        data.get("name"),
-        120
-    )
-
-    email = normalize_email(
-        data.get("email")
+    username = normalize_username(
+        data.get("username")
     )
 
     password = safe_text(
@@ -2660,26 +1972,52 @@ def signup():
         200
     )
 
-    if not name:
+    confirm_password = safe_text(
+        data.get(
+            "confirm_password",
+            data.get(
+                "confirmPassword"
+            )
+        ),
+        200
+    )
 
-        return jsonify({
-            "success": False,
-            "message": "Name is required."
-        }), 400
+    # --------------------------------------------------------
+    # USERNAME
+    # --------------------------------------------------------
 
-    if not email:
-
-        return jsonify({
-            "success": False,
-            "message": "Email is required."
-        }), 400
-
-    if "@" not in email:
+    if not username:
 
         return jsonify({
             "success": False,
             "message": (
-                "Please enter a valid email address."
+                "Username is required."
+            )
+        }), 400
+
+    if not valid_username(
+        username
+    ):
+
+        return jsonify({
+            "success": False,
+            "message": (
+                "Username must be 3-30 characters "
+                "and contain only letters, numbers "
+                "and underscores."
+            )
+        }), 400
+
+    # --------------------------------------------------------
+    # PASSWORD
+    # --------------------------------------------------------
+
+    if not password:
+
+        return jsonify({
+            "success": False,
+            "message": (
+                "Password is required."
             )
         }), 400
 
@@ -2692,22 +2030,39 @@ def signup():
             )
         }), 400
 
-    if find_user_by_email(email):
+    if password != confirm_password:
 
         return jsonify({
             "success": False,
             "message": (
-                "An account with this email already exists."
+                "Passwords do not match."
+            )
+        }), 400
+
+    # --------------------------------------------------------
+    # EXISTING USER
+    # --------------------------------------------------------
+
+    if username_exists(
+        username
+    ):
+
+        return jsonify({
+            "success": False,
+            "message": (
+                "That username is already taken."
             )
         }), 409
-
-    username = email
 
     password_hash = hash_password(
         password
     )
 
     created_at = now_iso()
+
+    # --------------------------------------------------------
+    # POSTGRESQL
+    # --------------------------------------------------------
 
     if db_enabled():
 
@@ -2720,7 +2075,6 @@ def signup():
                 cur.execute("""
                     INSERT INTO users(
                         username,
-                        email,
                         name,
                         password_hash,
                         created_at
@@ -2729,13 +2083,11 @@ def signup():
                         %s,
                         %s,
                         %s,
-                        %s,
                         %s
                     )
                 """, (
                     username,
-                    email,
-                    name,
+                    username,
                     password_hash,
                     created_at
                 ))
@@ -2766,15 +2118,21 @@ def signup():
             raise
 
         finally:
+
             conn.close()
+
+    # --------------------------------------------------------
+    # JSON FALLBACK
+    # --------------------------------------------------------
 
     else:
 
         users = get_users_json()
 
-        users[username] = {
-            "email": email,
-            "name": name,
+        users[
+            username
+        ] = {
+            "name": username,
             "password_hash": password_hash,
             "created_at": created_at
         }
@@ -2795,9 +2153,8 @@ def signup():
         )
 
     user = {
-        "name": name,
-        "email": email,
-        "username": username
+        "username": username,
+        "name": username
     }
 
     return jsonify({
@@ -2820,13 +2177,8 @@ def login():
         silent=True
     ) or {}
 
-    email = normalize_email(
-        data.get("email")
-    )
-
-    username = safe_text(
-        data.get("username"),
-        254
+    username = normalize_username(
+        data.get("username")
     )
 
     password = safe_text(
@@ -2834,39 +2186,34 @@ def login():
         200
     )
 
-    if not email and username:
-        email = username
-
-    if not email:
+    if not username:
 
         return jsonify({
             "success": False,
-            "message": "Email is required."
+            "message": (
+                "Username is required."
+            )
         }), 400
 
     if not password:
 
         return jsonify({
             "success": False,
-            "message": "Password is required."
+            "message": (
+                "Password is required."
+            )
         }), 400
 
-    user = find_user_by_email(
-        email
+    user = get_user_by_identity(
+        username
     )
-
-    if not user:
-
-        user = get_user_by_identity(
-            email
-        )
 
     if not user:
 
         return jsonify({
             "success": False,
             "message": (
-                "Invalid email or password."
+                "Invalid username or password."
             )
         }), 401
 
@@ -2877,7 +2224,10 @@ def login():
 
     valid = False
 
-    # Legacy plaintext-password migration.
+    # --------------------------------------------------------
+    # LEGACY PLAINTEXT MIGRATION
+    # --------------------------------------------------------
+
     if stored == password:
 
         valid = True
@@ -2906,6 +2256,7 @@ def login():
                 conn.commit()
 
             finally:
+
                 conn.close()
 
         else:
@@ -2938,7 +2289,7 @@ def login():
         return jsonify({
             "success": False,
             "message": (
-                "Invalid email or password."
+                "Invalid username or password."
             )
         }), 401
 
@@ -2950,170 +2301,6 @@ def login():
         "success": True,
         "message": "Login successful.",
         "user": public_user(user)
-    })
-
-
-# ============================================================
-# FORGOT PASSWORD
-# ============================================================
-
-@app.post("/forgot-password")
-def forgot_password():
-
-    data = request.get_json(
-        silent=True
-    ) or {}
-
-    email = normalize_email(
-        data.get("email")
-    )
-
-    generic_message = (
-        "If an account exists for that email, "
-        "a password reset link has been sent."
-    )
-
-    if not email:
-
-        return jsonify({
-            "success": False,
-            "message": "Email is required."
-        }), 400
-
-    user = find_user_by_email(
-        email
-    )
-
-    if not user:
-
-        return jsonify({
-            "success": True,
-            "message": generic_message
-        })
-
-    token = create_reset_token(
-        user["username"]
-    )
-
-    sent = send_reset_email(
-        user.get(
-            "email",
-            email
-        ),
-        user.get(
-            "name",
-            ""
-        ),
-        token
-    )
-
-    if not sent:
-
-        print(
-            "WARNING: Reset email could not be sent."
-        )
-
-    return jsonify({
-        "success": True,
-        "message": generic_message,
-        "email_configured": sent
-    })
-
-
-# ============================================================
-# RESET PASSWORD
-# ============================================================
-
-@app.post("/reset-password")
-def reset_password():
-
-    data = request.get_json(
-        silent=True
-    ) or {}
-
-    token = safe_text(
-        data.get("token"),
-        500
-    )
-
-    new_password = safe_text(
-        data.get("password"),
-        200
-    )
-
-    confirm_password = safe_text(
-        data.get("confirm_password"),
-        200
-    )
-
-    if not token:
-
-        return jsonify({
-            "success": False,
-            "message": (
-                "Password reset token is missing."
-            )
-        }), 400
-
-    if len(new_password) < 6:
-
-        return jsonify({
-            "success": False,
-            "message": (
-                "Password must be at least 6 characters."
-            )
-        }), 400
-
-    if new_password != confirm_password:
-
-        return jsonify({
-            "success": False,
-            "message": (
-                "Passwords do not match."
-            )
-        }), 400
-
-    reset_record = verify_and_consume_reset_token(
-        token
-    )
-
-    if not reset_record:
-
-        return jsonify({
-            "success": False,
-            "message": (
-                "This reset link is invalid or has expired."
-            )
-        }), 400
-
-    username = reset_record[
-        "username"
-    ]
-
-    success = update_password_for_user(
-        username,
-        new_password
-    )
-
-    if not success:
-
-        return jsonify({
-            "success": False,
-            "message": (
-                "Unable to reset the password."
-            )
-        }), 500
-
-    consume_reset_token(
-        token
-    )
-
-    return jsonify({
-        "success": True,
-        "message": (
-            "Password reset successfully. "
-            "You can now log in."
-        )
     })
 
 
@@ -3130,7 +2317,7 @@ def conversations_endpoint():
 
         return jsonify({
             "success": False,
-            "message": "User is required."
+            "message": "Username is required."
         }), 400
 
     items = get_conversations(
@@ -3152,7 +2339,7 @@ def new_conversation():
 
         return jsonify({
             "success": False,
-            "message": "User is required."
+            "message": "Username is required."
         }), 400
 
     data = request.get_json(
@@ -3188,7 +2375,7 @@ def conversation_detail(
 
         return jsonify({
             "success": False,
-            "message": "User is required."
+            "message": "Username is required."
         }), 400
 
     conversation = find_conversation(
@@ -3230,7 +2417,7 @@ def rename_conversation(
 
         return jsonify({
             "success": False,
-            "message": "User is required."
+            "message": "Username is required."
         }), 400
 
     data = request.get_json(
@@ -3289,7 +2476,7 @@ def chat():
 
         return jsonify({
             "success": False,
-            "message": "User is required."
+            "message": "Username is required."
         }), 400
 
     username = user[
@@ -3342,6 +2529,10 @@ def chat():
             "id"
         ]
 
+    # --------------------------------------------------------
+    # IMAGE REQUEST
+    # --------------------------------------------------------
+
     if (
         data.get(
             "generate_image"
@@ -3391,6 +2582,10 @@ def chat():
                 "image_url": image_url,
                 "image_prompt": message
             })
+
+    # --------------------------------------------------------
+    # NORMAL CHAT
+    # --------------------------------------------------------
 
     add_message(
         username,
@@ -3453,7 +2648,7 @@ def profile_get():
 
         return jsonify({
             "success": False,
-            "message": "User is required."
+            "message": "Username is required."
         }), 400
 
     memory = get_user_memory(
@@ -3466,11 +2661,7 @@ def profile_get():
         "username": user["username"],
         "name": user.get(
             "name",
-            ""
-        ),
-        "email": user.get(
-            "email",
-            ""
+            user["username"]
         ),
         "conversation_count": len(
             get_conversations(
@@ -3493,7 +2684,7 @@ def profile_update():
 
         return jsonify({
             "success": False,
-            "message": "User is required."
+            "message": "Username is required."
         }), 400
 
     data = request.get_json(
@@ -3532,7 +2723,6 @@ def profile_update():
                     WHERE username=%s
                     RETURNING
                         username,
-                        email,
                         name,
                         created_at,
                         password_hash
@@ -3546,9 +2736,11 @@ def profile_update():
             conn.commit()
 
             if row:
+
                 user = dict(row)
 
         finally:
+
             conn.close()
 
     else:
@@ -3586,7 +2778,7 @@ def memory_get():
 
         return jsonify({
             "success": False,
-            "message": "User is required."
+            "message": "Username is required."
         }), 400
 
     memory = get_user_memory(
@@ -3623,7 +2815,7 @@ def memory_clear():
 
         return jsonify({
             "success": False,
-            "message": "User is required."
+            "message": "Username is required."
         }), 400
 
     memory = get_user_memory(
@@ -3680,7 +2872,7 @@ def clear_chat():
 
         return jsonify({
             "success": False,
-            "message": "User is required."
+            "message": "Username is required."
         }), 400
 
     data = request.get_json(
@@ -3727,7 +2919,7 @@ def clear_chat():
                     DELETE FROM messages
                     WHERE conversation_id=%s
                 """, (
-                    conversation_id
+                    conversation_id,
                 ))
 
                 cur.execute("""
@@ -3745,6 +2937,7 @@ def clear_chat():
             conn.commit()
 
         finally:
+
             conn.close()
 
     else:
@@ -3796,11 +2989,17 @@ def root():
 
     return jsonify({
         "name": "NEXORA AI",
-        "version": "13.0",
+        "version": "14.0",
         "status": "online",
+
+        "authentication": {
+            "type": "username_password",
+            "email_authentication": False,
+            "password_reset": False
+        },
+
         "features": {
-            "email_authentication": True,
-            "password_reset": True,
+            "username_authentication": True,
             "multi_conversations": True,
             "conversation_memory": True,
             "global_saved_memory": True,
@@ -3822,23 +3021,24 @@ def status():
 
     return jsonify({
         "name": "NEXORA AI",
-        "version": "13.0",
+        "version": "14.0",
         "status": "online",
+
         "openai_connected": bool(
             client
         ),
+
         "database_connected":
             db_enabled(),
-        "password_reset_email":
-            bool(
-                RESEND_API_KEY
-                and RESEND_FROM
-            ),
-        "email_provider":
-            "resend",
+
+        "authentication": {
+            "type": "username_password",
+            "email_authentication": False,
+            "password_reset": False
+        },
+
         "features": {
-            "email_authentication": True,
-            "password_reset": True,
+            "username_authentication": True,
             "multi_conversations": True,
             "conversation_memory": True,
             "global_saved_memory": True,
