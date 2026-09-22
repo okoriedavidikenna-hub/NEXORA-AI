@@ -1,29 +1,29 @@
 /* =========================================================
    NEXORA AI
    PREMIUM DARK AI INTERFACE — VERSION 12
-   BLUE THEME
+   ELECTRIC CYAN / BLUE THEME
    ========================================================= */
 
 :root {
-    --bg: #05070d;
-    --bg-soft: #090c14;
-    --panel: #0d111b;
-    --panel-2: #111722;
+    --bg: #020617;
+    --bg-soft: #061127;
+    --panel: #08152e;
+    --panel-2: #0b1d3d;
 
-    --border: rgba(255, 255, 255, 0.08);
+    --border: rgba(56, 217, 255, 0.16);
 
-    --text: #f5f7fb;
-    --text-soft: #9da6b8;
-    --text-muted: #687286;
+    --text: #f8fbff;
+    --text-soft: #a9c2df;
+    --text-muted: #7188a8;
 
     /* =====================================================
-       NEXORA BLUE
+       NEXORA ELECTRIC BLUE
        ===================================================== */
 
-    --accent: #1683ff;
-    --accent-2: #42a5ff;
-    --accent-dark: #0757c9;
-    --accent-soft: rgba(22, 131, 255, 0.15);
+    --accent: #00bfff;
+    --accent-2: #38d9ff;
+    --accent-dark: #1261ff;
+    --accent-soft: rgba(0, 191, 255, 0.14);
 
     --danger: #ff5f6d;
 
@@ -50,7 +50,14 @@ body {
 }
 
 body {
-    background: var(--bg);
+    background:
+        radial-gradient(
+            circle at 50% -20%,
+            rgba(0, 191, 255, 0.10),
+            transparent 40%
+        ),
+        var(--bg);
+
     color: var(--text);
 
     font-family:
@@ -94,10 +101,15 @@ textarea {
     background:
         radial-gradient(
             circle at center,
-            rgba(22, 131, 255, 0.18),
-            transparent 38%
+            rgba(0, 191, 255, 0.24),
+            transparent 32%
         ),
-        #05070d;
+        radial-gradient(
+            circle at 50% 65%,
+            rgba(18, 97, 255, 0.18),
+            transparent 45%
+        ),
+        #020617;
 
     display: flex;
     align-items: center;
@@ -141,8 +153,8 @@ textarea {
     background:
         linear-gradient(
             145deg,
-            #42a5ff,
-            #0757c9
+            #38d9ff,
+            #1261ff
         );
 
     color: white;
@@ -151,8 +163,9 @@ textarea {
     font-weight: 900;
 
     box-shadow:
-        0 0 45px rgba(22, 131, 255, 0.55),
-        inset 0 1px 1px rgba(255, 255, 255, 0.25);
+        0 0 25px rgba(0, 191, 255, 0.55),
+        0 0 65px rgba(18, 97, 255, 0.30),
+        inset 0 1px 2px rgba(255, 255, 255, 0.35);
 
     margin-bottom: 20px;
 }
@@ -165,7 +178,8 @@ textarea {
     color: white;
 
     text-shadow:
-        0 0 25px rgba(22, 131, 255, 0.4);
+        0 0 12px rgba(56, 217, 255, 0.55),
+        0 0 35px rgba(18, 97, 255, 0.40);
 }
 
 .splash-tagline {
@@ -176,7 +190,7 @@ textarea {
 
     letter-spacing: 5px;
 
-    color: var(--text-muted);
+    color: #7fa9d2;
 }
 
 @keyframes splashEnter {
@@ -218,8 +232,13 @@ textarea {
     background:
         radial-gradient(
             circle at top,
-            rgba(22, 131, 255, 0.15),
-            transparent 35%
+            rgba(0, 191, 255, 0.18),
+            transparent 32%
+        ),
+        radial-gradient(
+            circle at bottom right,
+            rgba(18, 97, 255, 0.12),
+            transparent 38%
         ),
         var(--bg);
 
@@ -232,19 +251,21 @@ textarea {
 
     padding: 38px 30px;
 
-    border: 1px solid var(--border);
+    border:
+        1px solid rgba(56, 217, 255, 0.15);
 
     border-radius: 26px;
 
     background:
         linear-gradient(
             145deg,
-            rgba(255, 255, 255, 0.035),
-            rgba(255, 255, 255, 0.015)
+            rgba(8, 29, 61, 0.82),
+            rgba(2, 10, 25, 0.88)
         );
 
     box-shadow:
-        0 25px 80px rgba(0, 0, 0, 0.45);
+        0 25px 80px rgba(0, 0, 0, 0.55),
+        0 0 45px rgba(0, 191, 255, 0.05);
 
     backdrop-filter: blur(20px);
 
@@ -276,7 +297,8 @@ textarea {
     font-weight: 900;
 
     box-shadow:
-        0 0 35px rgba(22, 131, 255, 0.4);
+        0 0 25px rgba(0, 191, 255, 0.45),
+        0 0 50px rgba(18, 97, 255, 0.20);
 }
 
 .auth-card h1 {
@@ -317,23 +339,29 @@ textarea {
 
     border-radius: 13px;
 
-    border: 1px solid var(--border);
+    border:
+        1px solid rgba(56, 217, 255, 0.13);
 
-    background: rgba(255, 255, 255, 0.035);
+    background:
+        rgba(6, 17, 39, 0.75);
 
     color: white;
 
     transition:
         border-color 0.2s ease,
-        background 0.2s ease;
+        background 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .auth-form input:focus {
     border-color:
-        rgba(22, 131, 255, 0.7);
+        rgba(56, 217, 255, 0.75);
 
     background:
-        rgba(22, 131, 255, 0.06);
+        rgba(0, 191, 255, 0.07);
+
+    box-shadow:
+        0 0 0 3px rgba(0, 191, 255, 0.07);
 }
 
 .auth-form input::placeholder {
@@ -355,13 +383,13 @@ textarea {
     background:
         linear-gradient(
             135deg,
-            #42a5ff,
-            #0757c9
+            #38d9ff,
+            #1261ff
         );
 
     box-shadow:
-        0 10px 25px
-        rgba(22, 131, 255, 0.25);
+        0 8px 25px rgba(0, 191, 255, 0.24),
+        0 0 25px rgba(18, 97, 255, 0.14);
 
     transition:
         transform 0.2s ease,
@@ -372,8 +400,8 @@ textarea {
     transform: translateY(-1px);
 
     box-shadow:
-        0 14px 30px
-        rgba(22, 131, 255, 0.35);
+        0 14px 32px rgba(0, 191, 255, 0.35),
+        0 0 35px rgba(18, 97, 255, 0.20);
 }
 
 .auth-button:active {
@@ -422,7 +450,13 @@ textarea {
 
     display: flex;
 
-    background: var(--bg);
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(0, 191, 255, 0.035),
+            transparent 40%
+        ),
+        var(--bg);
 }
 
 
@@ -434,7 +468,7 @@ textarea {
     position: fixed;
     inset: 0;
 
-    background: rgba(0, 0, 0, 0.55);
+    background: rgba(0, 5, 15, 0.68);
 
     opacity: 0;
     visibility: hidden;
@@ -471,11 +505,15 @@ textarea {
     background:
         linear-gradient(
             180deg,
-            #090c14,
-            #060810
+            #07152e,
+            #020918
         );
 
-    border-right: 1px solid var(--border);
+    border-right:
+        1px solid rgba(56, 217, 255, 0.13);
+
+    box-shadow:
+        10px 0 50px rgba(0, 0, 0, 0.25);
 
     z-index: 100;
 
@@ -533,8 +571,7 @@ textarea {
     font-weight: 900;
 
     box-shadow:
-        0 0 18px
-        rgba(22, 131, 255, 0.3);
+        0 0 16px rgba(0, 191, 255, 0.38);
 }
 
 .icon-button {
@@ -556,9 +593,9 @@ textarea {
 
 .icon-button:hover {
     background:
-        rgba(255, 255, 255, 0.06);
+        rgba(0, 191, 255, 0.10);
 
-    color: white;
+    color: var(--accent-2);
 }
 
 .new-chat-button {
@@ -567,22 +604,37 @@ textarea {
 
     border-radius: 13px;
 
-    background: var(--accent-soft);
+    background:
+        linear-gradient(
+            135deg,
+            rgba(0, 191, 255, 0.17),
+            rgba(18, 97, 255, 0.12)
+        );
 
     border:
         1px solid
-        rgba(22, 131, 255, 0.25);
+        rgba(56, 217, 255, 0.25);
 
     color: white;
 
     font-weight: 700;
 
     margin-bottom: 25px;
+
+    box-shadow:
+        0 0 18px rgba(0, 191, 255, 0.05);
 }
 
 .new-chat-button:hover {
     background:
-        rgba(22, 131, 255, 0.22);
+        linear-gradient(
+            135deg,
+            rgba(0, 191, 255, 0.25),
+            rgba(18, 97, 255, 0.18)
+        );
+
+    border-color:
+        rgba(56, 217, 255, 0.42);
 }
 
 .drawer-section {
@@ -629,7 +681,7 @@ textarea {
 .conversation-item:hover,
 .conversation-item.active {
     background:
-        rgba(255, 255, 255, 0.05);
+        rgba(0, 191, 255, 0.08);
 }
 
 .conversation-button {
@@ -704,7 +756,7 @@ textarea {
     background:
         var(--accent-soft);
 
-    color: white;
+    color: var(--accent-2);
 }
 
 .conversation-empty {
@@ -747,7 +799,7 @@ textarea {
 
 .drawer-option:hover {
     background:
-        rgba(255, 255, 255, 0.05);
+        rgba(0, 191, 255, 0.08);
 
     color: white;
 }
@@ -770,7 +822,12 @@ textarea {
 
     border-radius: 50%;
 
-    background: #1877f2;
+    background:
+        linear-gradient(
+            135deg,
+            #38d9ff,
+            #1261ff
+        );
 
     color: white;
 
@@ -782,7 +839,7 @@ textarea {
 
     box-shadow:
         0 0 10px
-        rgba(24, 119, 242, 0.35);
+        rgba(0, 191, 255, 0.45);
 }
 
 .top-badge {
@@ -818,10 +875,10 @@ textarea {
     align-items: center;
 
     border-bottom:
-        1px solid var(--border);
+        1px solid rgba(56, 217, 255, 0.12);
 
     background:
-        rgba(5, 7, 13, 0.82);
+        rgba(2, 9, 24, 0.84);
 
     backdrop-filter: blur(18px);
 
@@ -864,7 +921,7 @@ textarea {
 
     box-shadow:
         0 0 18px
-        rgba(22, 131, 255, 0.3);
+        rgba(0, 191, 255, 0.38);
 }
 
 .profile-button {
@@ -879,14 +936,22 @@ textarea {
     align-items: center;
     justify-content: center;
 
-    background: var(--panel-2);
+    background:
+        linear-gradient(
+            145deg,
+            #0d2850,
+            #08152e
+        );
 
     border:
-        1px solid var(--border);
+        1px solid rgba(56, 217, 255, 0.16);
 
     color: white;
 
     font-weight: 800;
+
+    box-shadow:
+        0 0 15px rgba(0, 191, 255, 0.05);
 }
 
 
@@ -904,6 +969,13 @@ textarea {
     position: relative;
 
     padding-bottom: 8px;
+
+    background:
+        radial-gradient(
+            circle at 50% 10%,
+            rgba(0, 191, 255, 0.025),
+            transparent 45%
+        );
 }
 
 .welcome-screen {
@@ -944,8 +1016,8 @@ textarea {
     font-weight: 900;
 
     box-shadow:
-        0 0 40px
-        rgba(22, 131, 255, 0.35);
+        0 0 25px rgba(0, 191, 255, 0.42),
+        0 0 55px rgba(18, 97, 255, 0.18);
 
     margin-bottom: 22px;
 }
@@ -955,6 +1027,9 @@ textarea {
         clamp(25px, 6vw, 38px);
 
     letter-spacing: -1px;
+
+    text-shadow:
+        0 0 25px rgba(0, 191, 255, 0.10);
 }
 
 .welcome-screen > p {
@@ -987,10 +1062,14 @@ textarea {
     border-radius: 13px;
 
     border:
-        1px solid var(--border);
+        1px solid rgba(56, 217, 255, 0.12);
 
     background:
-        rgba(255, 255, 255, 0.025);
+        linear-gradient(
+            145deg,
+            rgba(8, 29, 61, 0.60),
+            rgba(6, 17, 39, 0.45)
+        );
 
     color: var(--text-soft);
 
@@ -999,20 +1078,28 @@ textarea {
     transition:
         background 0.2s ease,
         border-color 0.2s ease,
-        transform 0.2s ease;
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .suggestion:hover {
     background:
-        var(--accent-soft);
+        linear-gradient(
+            145deg,
+            rgba(0, 191, 255, 0.14),
+            rgba(18, 97, 255, 0.12)
+        );
 
     border-color:
-        rgba(22, 131, 255, 0.35);
+        rgba(56, 217, 255, 0.35);
 
     color: white;
 
     transform:
         translateY(-2px);
+
+    box-shadow:
+        0 8px 25px rgba(0, 191, 255, 0.08);
 }
 
 
@@ -1056,13 +1143,23 @@ textarea {
     justify-content: center;
 
     background:
-        var(--accent-soft);
+        linear-gradient(
+            145deg,
+            rgba(0, 191, 255, 0.20),
+            rgba(18, 97, 255, 0.13)
+        );
+
+    border:
+        1px solid rgba(56, 217, 255, 0.14);
 
     color: white;
 
     font-size: 13px;
 
     font-weight: 800;
+
+    box-shadow:
+        0 0 15px rgba(0, 191, 255, 0.06);
 }
 
 .message-content {
@@ -1074,16 +1171,24 @@ textarea {
 
     border-radius: 15px;
 
-    background: var(--panel);
+    background:
+        linear-gradient(
+            145deg,
+            #091a36,
+            #071329
+        );
 
     border:
-        1px solid var(--border);
+        1px solid rgba(56, 217, 255, 0.11);
 
     line-height: 1.55;
 
     font-size: 14px;
 
     white-space: pre-wrap;
+
+    box-shadow:
+        0 5px 20px rgba(0, 0, 0, 0.12);
 }
 
 .message.user
@@ -1091,12 +1196,15 @@ textarea {
     background:
         linear-gradient(
             135deg,
-            rgba(22, 131, 255, 0.25),
-            rgba(22, 131, 255, 0.12)
+            rgba(0, 191, 255, 0.28),
+            rgba(18, 97, 255, 0.22)
         );
 
     border-color:
-        rgba(22, 131, 255, 0.25);
+        rgba(56, 217, 255, 0.28);
+
+    box-shadow:
+        0 5px 25px rgba(0, 191, 255, 0.07);
 }
 
 
@@ -1142,14 +1250,19 @@ textarea {
 
     border-radius: 17px;
 
-    background: var(--panel);
+    background:
+        linear-gradient(
+            145deg,
+            #0a1b38,
+            #071329
+        );
 
     border:
-        1px solid var(--border);
+        1px solid rgba(56, 217, 255, 0.15);
 
     box-shadow:
-        0 10px 40px
-        rgba(0, 0, 0, 0.25);
+        0 10px 40px rgba(0, 0, 0, 0.30),
+        0 0 25px rgba(0, 191, 255, 0.04);
 }
 
 #messageInput {
@@ -1199,9 +1312,9 @@ textarea {
 
 .input-button:hover {
     background:
-        rgba(255, 255, 255, 0.05);
+        rgba(0, 191, 255, 0.09);
 
-    color: white;
+    color: var(--accent-2);
 }
 
 .send-button {
@@ -1218,7 +1331,15 @@ textarea {
 
     box-shadow:
         0 0 18px
-        rgba(22, 131, 255, 0.25);
+        rgba(0, 191, 255, 0.28),
+        0 0 30px
+        rgba(18, 97, 255, 0.10);
+}
+
+.send-button:hover {
+    box-shadow:
+        0 0 25px
+        rgba(0, 191, 255, 0.40);
 }
 
 .input-disclaimer {
@@ -1254,7 +1375,7 @@ textarea {
     padding: 20px;
 
     background:
-        rgba(0, 0, 0, 0.7);
+        rgba(0, 5, 15, 0.78);
 
     backdrop-filter: blur(8px);
 }
@@ -1269,14 +1390,19 @@ textarea {
 
     border-radius: 22px;
 
-    background: #0d111b;
+    background:
+        linear-gradient(
+            145deg,
+            #0b1d3d,
+            #050f22
+        );
 
     border:
-        1px solid var(--border);
+        1px solid rgba(56, 217, 255, 0.15);
 
     box-shadow:
-        0 30px 90px
-        rgba(0, 0, 0, 0.55);
+        0 30px 90px rgba(0, 0, 0, 0.60),
+        0 0 40px rgba(0, 191, 255, 0.05);
 
     text-align: center;
 }
@@ -1301,9 +1427,9 @@ textarea {
 
 .modal-close:hover {
     background:
-        rgba(255, 255, 255, 0.06);
+        rgba(0, 191, 255, 0.09);
 
-    color: white;
+    color: var(--accent-2);
 }
 
 .modal-logo {
@@ -1320,11 +1446,18 @@ textarea {
     justify-content: center;
 
     background:
-        var(--accent-soft);
+        linear-gradient(
+            145deg,
+            rgba(0, 191, 255, 0.18),
+            rgba(18, 97, 255, 0.14)
+        );
 
     color: var(--accent-2);
 
     font-size: 25px;
+
+    box-shadow:
+        0 0 22px rgba(0, 191, 255, 0.08);
 }
 
 .modal-card h2 {
@@ -1352,17 +1485,20 @@ textarea {
     border-radius: 12px;
 
     border:
-        1px solid var(--border);
+        1px solid rgba(56, 217, 255, 0.13);
 
     background:
-        rgba(255, 255, 255, 0.035);
+        rgba(6, 17, 39, 0.75);
 
     color: white;
 }
 
 .modal-card input:focus {
     border-color:
-        rgba(22, 131, 255, 0.6);
+        rgba(56, 217, 255, 0.65);
+
+    box-shadow:
+        0 0 0 3px rgba(0, 191, 255, 0.06);
 }
 
 .account-secondary {
@@ -1371,10 +1507,10 @@ textarea {
     width: 100%;
 
     border:
-        1px solid var(--border);
+        1px solid rgba(56, 217, 255, 0.12);
 
     background:
-        rgba(255, 255, 255, 0.06);
+        rgba(0, 191, 255, 0.06);
 
     color: white;
 }
@@ -1393,7 +1529,10 @@ textarea {
     border-radius: 13px;
 
     background:
-        rgba(255, 255, 255, 0.025);
+        rgba(0, 191, 255, 0.035);
+
+    border:
+        1px solid rgba(56, 217, 255, 0.08);
 
     text-align: left;
 
@@ -1426,6 +1565,14 @@ textarea {
         rgba(255, 255, 255, 0.06);
 
     color: white;
+
+    border:
+        1px solid rgba(56, 217, 255, 0.10);
+}
+
+.secondary-button:hover {
+    background:
+        rgba(0, 191, 255, 0.08);
 }
 
 .danger-button {
@@ -1455,14 +1602,14 @@ textarea {
 
 ::-webkit-scrollbar-thumb {
     background:
-        rgba(255, 255, 255, 0.12);
+        rgba(56, 217, 255, 0.18);
 
     border-radius: 20px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background:
-        rgba(255, 255, 255, 0.2);
+        rgba(56, 217, 255, 0.35);
 }
 
 
@@ -1638,7 +1785,7 @@ textarea {
         position: fixed;
         left: 0;
         right: 0;
-        bottom: 60px;
+        bottom: 50px;
 
         width: 100%;
 
@@ -1649,7 +1796,7 @@ textarea {
             linear-gradient(
                 180deg,
                 transparent,
-                rgba(5, 7, 13, 0.96) 25%
+                rgba(2, 6, 23, 0.97) 25%
             );
 
         z-index: 50;
