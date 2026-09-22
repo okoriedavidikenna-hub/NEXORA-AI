@@ -1,16 +1,15 @@
 /* ============================================================
-   NEXORA AI
-   AI WEBSITE FRONTEND CONTROLLER
-   MATCHED TO THE EXACT NEXORA AI HTML + CSS
-   DAVIDS DIGITALS LTD.©
-   ============================================================ */
+NEXORA AI
+AI WEBSITE FRONTEND CONTROLLER
+MATCHED TO THE EXACT NEXORA AI HTML + CSS
+DAVIDS DIGITALS LTD.©
+============================================================ */
 
 const API_BASE = "https://nexora-ai-9jgj.onrender.com";
 
-
 /* ============================================================
-   STATE
-   ============================================================ */
+STATE
+============================================================ */
 
 let currentUser = null;
 let currentConversationId = null;
@@ -19,17 +18,15 @@ let renameConversationId = null;
 let isSending = false;
 let recognition = null;
 
-
 /* ============================================================
-   DOM HELPER
-   ============================================================ */
+DOM HELPER
+============================================================ */
 
 const $ = (id) => document.getElementById(id);
 
-
 /* ============================================================
-   DISPLAY HELPERS
-   ============================================================ */
+DISPLAY HELPERS
+============================================================ */
 
 function show(element) {
     if (element) {
@@ -37,17 +34,15 @@ function show(element) {
     }
 }
 
-
 function hide(element) {
     if (element) {
         element.style.display = "none";
     }
 }
 
-
 /* ============================================================
-   API
-   ============================================================ */
+API
+============================================================ */
 
 async function api(endpoint, options = {}) {
 
@@ -96,10 +91,9 @@ async function api(endpoint, options = {}) {
     }
 }
 
-
 /* ============================================================
-   AUTH MESSAGE
-   ============================================================ */
+AUTH MESSAGE
+============================================================ */
 
 function setAuthMessage(message, type = "") {
 
@@ -114,21 +108,14 @@ function setAuthMessage(message, type = "") {
         (type ? ` ${type}` : "");
 }
 
-
 /* ============================================================
-   AUTH SCREENS
-   ============================================================ */
+AUTH SCREENS
+============================================================ */
 
 function showAuthScreen(screenId) {
 
     hide($("loginScreen"));
     hide($("signupScreen"));
-
-    /*
-       The current AI HTML only contains login and signup.
-       These checks remain defensive in case they are added later.
-    */
-
     hide($("forgotPasswordScreen"));
     hide($("resetPasswordScreen"));
 
@@ -141,10 +128,247 @@ function showAuthScreen(screenId) {
     setAuthMessage("");
 }
 
+/* ============================================================
+FORGOT PASSWORD
+============================================================ */
+
+async function forgotPassword() {
+
+    const email =
+        $("forgotPasswordEmail")?.value.trim();
+
+    if (!email) {
+
+        setAuthMessage(
+            "Please enter the email connected to your NEXORA account.",
+            "error"
+        );
+
+        return;
+    }
+
+    const button =
+        $("forgotPasswordBtn");
+
+    if (button) {
+
+        button.disabled = true;
+        button.textContent = "Sending...";
+    }
+
+    try {
+
+        const data = await api(
+            "/forgot-password",
+            {
+                method: "POST",
+
+                body: JSON.stringify({
+                    email
+                })
+            }
+        );
+
+        setAuthMessage(
+            data.message ||
+            "If an account exists with that email, a password reset link has been sent.",
+            "success"
+        );
+
+    } catch (error) {
+
+        setAuthMessage(
+            error.message ||
+            "Unable to send the password reset email.",
+            "error"
+        );
+
+    } finally {
+
+        if (button) {
+
+            button.disabled = false;
+            button.textContent = "Send Reset Link";
+        }
+    }
+}
 
 /* ============================================================
-   USER STORAGE
-   ============================================================ */
+RESET PASSWORD
+============================================================ */
+
+async function resetPassword() {
+
+    const password =
+        $("resetPassword")?.value || "";
+
+    const confirmPassword =
+        $("resetPasswordConfirm")?.value || "";
+
+    const token =
+        new URLSearchParams(
+            window.location.search
+        ).get("reset_token");
+
+    if (!token) {
+
+        setAuthMessage(
+            "This password reset link is missing or invalid.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!password) {
+
+        setAuthMessage(
+            "Please enter a new password.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (password.length < 6) {
+
+        setAuthMessage(
+            "Password must be at least 6 characters.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (password !== confirmPassword) {
+
+        setAuthMessage(
+            "The passwords do not match.",
+            "error"
+        );
+
+        return;
+    }
+
+    const button =
+        $("resetPasswordBtn");
+
+    if (button) {
+
+        button.disabled = true;
+        button.textContent = "Resetting...";
+    }
+
+    try {
+
+        const data = await api(
+            "/reset-password",
+            {
+                method: "POST",
+
+                body: JSON.stringify({
+                    token,
+                    password
+                })
+            }
+        );
+
+        setAuthMessage(
+            data.message ||
+            "Your password has been reset successfully.",
+            "success"
+        );
+
+        /*
+         * Remove the reset token from the browser
+         * after successful password reset.
+         */
+
+        window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+        );
+
+        if ($("resetPassword")) {
+            $("resetPassword").value = "";
+        }
+
+        if ($("resetPasswordConfirm")) {
+            $("resetPasswordConfirm").value = "";
+        }
+
+        setTimeout(
+            () => {
+
+                showAuthScreen(
+                    "loginScreen"
+                );
+
+                setAuthMessage(
+                    "Password reset successfully. You can now log in.",
+                    "success"
+                );
+
+            },
+            1200
+        );
+
+    } catch (error) {
+
+        setAuthMessage(
+            error.message ||
+            "Unable to reset your password. The link may have expired.",
+            "error"
+        );
+
+    } finally {
+
+        if (button) {
+
+            button.disabled = false;
+            button.textContent = "Reset Password";
+        }
+    }
+}
+
+/* ============================================================
+CHECK RESET TOKEN
+============================================================ */
+
+function checkPasswordResetLink() {
+
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    const token =
+        params.get("reset_token");
+
+    if (!token) {
+        return false;
+    }
+
+    /*
+     * A reset token exists.
+     * Show the reset-password screen instead
+     * of the normal login screen.
+     */
+
+    hide($("splashScreen"));
+    show($("authScreen"));
+
+    showAuthScreen(
+        "resetPasswordScreen"
+    );
+
+    return true;
+}
+
+/* ============================================================
+USER STORAGE
+============================================================ */
 
 function saveUser(user) {
 
@@ -157,7 +381,6 @@ function saveUser(user) {
         JSON.stringify(user)
     );
 }
-
 
 function loadUser() {
 
@@ -187,10 +410,9 @@ function loadUser() {
     }
 }
 
-
 /* ============================================================
-   USER ID / PAYLOAD
-   ============================================================ */
+USER ID / PAYLOAD
+============================================================ */
 
 function getUserId() {
 
@@ -206,7 +428,6 @@ function getUserId() {
     );
 }
 
-
 function userPayload() {
 
     if (!currentUser) {
@@ -214,6 +435,7 @@ function userPayload() {
     }
 
     return {
+
         user_id:
             getUserId(),
 
@@ -235,10 +457,9 @@ function userPayload() {
     };
 }
 
-
 /* ============================================================
-   AUTH USER NORMALIZER
-   ============================================================ */
+AUTH USER NORMALIZER
+============================================================ */
 
 function normalizeUser(data) {
 
@@ -258,6 +479,7 @@ function normalizeUser(data) {
     ) {
 
         return {
+
             id:
                 data.id ||
                 data.user_id,
@@ -275,10 +497,9 @@ function normalizeUser(data) {
     return null;
 }
 
-
 /* ============================================================
-   LOGOUT
-   ============================================================ */
+LOGOUT
+============================================================ */
 
 function logout() {
 
@@ -317,10 +538,9 @@ function logout() {
     closeDrawer();
 }
 
-
 /* ============================================================
-   LOGIN
-   ============================================================ */
+LOGIN
+============================================================ */
 
 async function login() {
 
@@ -364,6 +584,7 @@ async function login() {
             "/login",
             {
                 method: "POST",
+
                 body: JSON.stringify({
                     email,
                     password
@@ -406,10 +627,9 @@ async function login() {
     }
 }
 
-
 /* ============================================================
-   SIGNUP
-   ============================================================ */
+SIGNUP
+============================================================ */
 
 async function signup() {
 
@@ -466,6 +686,7 @@ async function signup() {
             "/signup",
             {
                 method: "POST",
+
                 body: JSON.stringify({
                     name,
                     email,
@@ -509,10 +730,9 @@ async function signup() {
     }
 }
 
-
 /* ============================================================
-   OPEN APP
-   ============================================================ */
+OPEN APP
+============================================================ */
 
 async function openApp() {
 
@@ -540,10 +760,9 @@ async function openApp() {
     }
 }
 
-
 /* ============================================================
-   PROFILE UI
-   ============================================================ */
+PROFILE UI
+============================================================ */
 
 function updateProfileUI() {
 
@@ -585,10 +804,9 @@ function updateProfileUI() {
     }
 }
 
-
 /* ============================================================
-   CONVERSATIONS
-   ============================================================ */
+CONVERSATIONS
+============================================================ */
 
 async function loadConversations() {
 
@@ -602,6 +820,7 @@ async function loadConversations() {
             new URLSearchParams();
 
         if (currentUser.email) {
+
             params.set(
                 "email",
                 currentUser.email
@@ -609,6 +828,7 @@ async function loadConversations() {
         }
 
         if (getUserId()) {
+
             params.set(
                 "user_id",
                 getUserId()
@@ -641,10 +861,9 @@ async function loadConversations() {
     }
 }
 
-
 /* ============================================================
-   RENDER CONVERSATIONS
-   ============================================================ */
+RENDER CONVERSATIONS
+============================================================ */
 
 function renderConversations() {
 
@@ -690,7 +909,6 @@ function renderConversations() {
                 item.classList.add("active");
             }
 
-
             const button =
                 document.createElement("button");
 
@@ -698,7 +916,6 @@ function renderConversations() {
 
             button.className =
                 "conversation-button";
-
 
             const title =
                 document.createElement("span");
@@ -713,7 +930,6 @@ function renderConversations() {
 
             button.appendChild(title);
 
-
             button.addEventListener(
                 "click",
                 async () => {
@@ -725,7 +941,6 @@ function renderConversations() {
                     closeDrawer();
                 }
             );
-
 
             const rename =
                 document.createElement("button");
@@ -740,7 +955,6 @@ function renderConversations() {
 
             rename.textContent =
                 "✎";
-
 
             rename.addEventListener(
                 "click",
@@ -758,7 +972,6 @@ function renderConversations() {
                 }
             );
 
-
             item.appendChild(button);
             item.appendChild(rename);
 
@@ -767,10 +980,9 @@ function renderConversations() {
     );
 }
 
-
 /* ============================================================
-   LOAD CONVERSATION
-   ============================================================ */
+LOAD CONVERSATION
+============================================================ */
 
 async function loadConversation(id) {
 
@@ -784,6 +996,7 @@ async function loadConversation(id) {
             new URLSearchParams();
 
         if (currentUser.email) {
+
             params.set(
                 "email",
                 currentUser.email
@@ -791,6 +1004,7 @@ async function loadConversation(id) {
         }
 
         if (getUserId()) {
+
             params.set(
                 "user_id",
                 getUserId()
@@ -836,10 +1050,9 @@ async function loadConversation(id) {
     }
 }
 
-
 /* ============================================================
-   CREATE NEW CHAT
-   ============================================================ */
+CREATE NEW CHAT
+============================================================ */
 
 async function createNewChat(silent = false) {
 
@@ -853,6 +1066,7 @@ async function createNewChat(silent = false) {
             "/conversations/new",
             {
                 method: "POST",
+
                 body: JSON.stringify({
                     ...userPayload(),
                     title: "New chat"
@@ -866,6 +1080,7 @@ async function createNewChat(silent = false) {
         if (!conversation) {
 
             if (!silent) {
+
                 showWelcome();
                 renderMessages([]);
             }
@@ -913,26 +1128,21 @@ async function createNewChat(silent = false) {
     }
 }
 
-
 /* ============================================================
-   WELCOME
-   ============================================================ */
+WELCOME
+============================================================ */
 
 function showWelcome() {
-
     show($("welcomeScreen"));
 }
 
-
 function hideWelcome() {
-
     hide($("welcomeScreen"));
 }
 
-
 /* ============================================================
-   RENDER MESSAGES
-   ============================================================ */
+RENDER MESSAGES
+============================================================ */
 
 function renderMessages(messages) {
 
@@ -986,10 +1196,9 @@ function renderMessages(messages) {
     scrollToBottom();
 }
 
-
 /* ============================================================
-   ADD MESSAGE
-   ============================================================ */
+ADD MESSAGE
+============================================================ */
 
 function addMessageToUI(
     role,
@@ -1014,13 +1223,11 @@ function addMessageToUI(
         wrapper.classList.add("user");
     }
 
-
     const avatar =
         document.createElement("div");
 
     avatar.className =
         "message-avatar";
-
 
     if (role === "user") {
 
@@ -1041,7 +1248,6 @@ function addMessageToUI(
         avatar.textContent = "N";
     }
 
-
     const contentBox =
         document.createElement("div");
 
@@ -1050,7 +1256,6 @@ function addMessageToUI(
 
     contentBox.textContent =
         content || "";
-
 
     if (imageUrl) {
 
@@ -1081,7 +1286,6 @@ function addMessageToUI(
         contentBox.appendChild(image);
     }
 
-
     if (role === "user") {
 
         wrapper.appendChild(
@@ -1106,10 +1310,9 @@ function addMessageToUI(
     container.appendChild(wrapper);
 }
 
-
 /* ============================================================
-   TYPING INDICATOR
-   ============================================================ */
+TYPING INDICATOR
+============================================================ */
 
 function showTyping() {
 
@@ -1131,7 +1334,6 @@ function showTyping() {
     wrapper.className =
         "message";
 
-
     const avatar =
         document.createElement("div");
 
@@ -1139,7 +1341,6 @@ function showTyping() {
         "message-avatar";
 
     avatar.textContent = "N";
-
 
     const bubble =
         document.createElement("div");
@@ -1150,7 +1351,6 @@ function showTyping() {
     bubble.textContent =
         "NEXORA is thinking...";
 
-
     wrapper.appendChild(avatar);
     wrapper.appendChild(bubble);
 
@@ -1158,7 +1358,6 @@ function showTyping() {
 
     scrollToBottom();
 }
-
 
 function removeTyping() {
 
@@ -1170,10 +1369,9 @@ function removeTyping() {
     }
 }
 
-
 /* ============================================================
-   SEND MESSAGE
-   ============================================================ */
+SEND MESSAGE
+============================================================ */
 
 async function sendMessage(customMessage = null) {
 
@@ -1209,7 +1407,6 @@ async function sendMessage(customMessage = null) {
         sendButton.disabled = true;
     }
 
-
     input.value = "";
     input.style.height = "auto";
 
@@ -1224,18 +1421,13 @@ async function sendMessage(customMessage = null) {
 
     try {
 
-        /*
-           If no conversation exists,
-           create one before sending.
-        */
-
         if (!currentConversationId) {
 
             await createNewChat(true);
         }
 
-
         const payload = {
+
             ...userPayload(),
 
             message,
@@ -1244,18 +1436,16 @@ async function sendMessage(customMessage = null) {
                 currentConversationId
         };
 
-
         const data = await api(
             "/chat",
             {
                 method: "POST",
+
                 body: JSON.stringify(payload)
             }
         );
 
-
         removeTyping();
-
 
         if (data.conversation_id) {
 
@@ -1269,7 +1459,6 @@ async function sendMessage(customMessage = null) {
                 data.conversation.id;
         }
 
-
         const reply =
             data.reply ||
             data.response ||
@@ -1277,20 +1466,17 @@ async function sendMessage(customMessage = null) {
             data.message ||
             "I couldn't generate a response.";
 
-
         const imageUrl =
             data.image_url ||
             data.imageUrl ||
             data.image?.url ||
             null;
 
-
         addMessageToUI(
             "assistant",
             reply,
             imageUrl
         );
-
 
         await loadConversations();
 
@@ -1322,10 +1508,9 @@ async function sendMessage(customMessage = null) {
     }
 }
 
-
 /* ============================================================
-   SCROLL
-   ============================================================ */
+SCROLL
+============================================================ */
 
 function scrollToBottom() {
 
@@ -1345,10 +1530,9 @@ function scrollToBottom() {
     );
 }
 
-
 /* ============================================================
-   DRAWER
-   ============================================================ */
+DRAWER
+============================================================ */
 
 function openDrawer() {
 
@@ -1361,7 +1545,6 @@ function openDrawer() {
         .add("open");
 }
 
-
 function closeDrawer() {
 
     $("drawer")
@@ -1373,10 +1556,9 @@ function closeDrawer() {
         .remove("open");
 }
 
-
 /* ============================================================
-   PROFILE MODAL
-   ============================================================ */
+PROFILE MODAL
+============================================================ */
 
 async function openProfile() {
 
@@ -1390,6 +1572,7 @@ async function openProfile() {
             new URLSearchParams();
 
         if (currentUser.email) {
+
             params.set(
                 "email",
                 currentUser.email
@@ -1397,6 +1580,7 @@ async function openProfile() {
         }
 
         if (getUserId()) {
+
             params.set(
                 "user_id",
                 getUserId()
@@ -1441,10 +1625,9 @@ async function openProfile() {
     }
 }
 
-
 /* ============================================================
-   SAVE PROFILE
-   ============================================================ */
+SAVE PROFILE
+============================================================ */
 
 async function saveProfile() {
 
@@ -1527,10 +1710,9 @@ async function saveProfile() {
     }
 }
 
-
 /* ============================================================
-   MEMORY
-   ============================================================ */
+MEMORY
+============================================================ */
 
 async function openMemory() {
 
@@ -1544,6 +1726,7 @@ async function openMemory() {
             new URLSearchParams();
 
         if (currentUser.email) {
+
             params.set(
                 "email",
                 currentUser.email
@@ -1551,6 +1734,7 @@ async function openMemory() {
         }
 
         if (getUserId()) {
+
             params.set(
                 "user_id",
                 getUserId()
@@ -1579,7 +1763,6 @@ async function openMemory() {
             data.memories ||
             data.memory ||
             [];
-
 
         if (
             typeof memories === "string"
@@ -1633,10 +1816,9 @@ async function openMemory() {
     }
 }
 
-
 /* ============================================================
-   CLEAR MEMORY
-   ============================================================ */
+CLEAR MEMORY
+============================================================ */
 
 async function clearMemory() {
 
@@ -1648,6 +1830,7 @@ async function clearMemory() {
         $("clearMemoryBtn");
 
     if (button) {
+
         button.disabled = true;
         button.textContent = "Clearing...";
     }
@@ -1662,6 +1845,7 @@ async function clearMemory() {
                 "/clear",
                 {
                     method: "POST",
+
                     body:
                         JSON.stringify(
                             userPayload()
@@ -1682,6 +1866,7 @@ async function clearMemory() {
                 "/memory/clear",
                 {
                     method: "POST",
+
                     body:
                         JSON.stringify(
                             userPayload()
@@ -1714,10 +1899,9 @@ async function clearMemory() {
     }
 }
 
-
 /* ============================================================
-   RENAME
-   ============================================================ */
+RENAME
+============================================================ */
 
 function openRename(
     id,
@@ -1752,10 +1936,9 @@ function openRename(
     }
 }
 
-
 /* ============================================================
-   SAVE RENAME
-   ============================================================ */
+SAVE RENAME
+============================================================ */
 
 async function saveConversationName() {
 
@@ -1828,16 +2011,13 @@ async function saveConversationName() {
     }
 }
 
-
 /* ============================================================
-   ACCOUNT SWITCH
-   ============================================================ */
+ACCOUNT SWITCH
+============================================================ */
 
 function openAccountModal() {
-
     show($("accountModal"));
 }
-
 
 function switchAccount() {
 
@@ -1853,7 +2033,6 @@ function switchAccount() {
     closeDrawer();
 }
 
-
 function switchToSignup() {
 
     hide($("accountModal"));
@@ -1868,10 +2047,9 @@ function switchToSignup() {
     closeDrawer();
 }
 
-
 /* ============================================================
-   VOICE INPUT
-   ============================================================ */
+VOICE INPUT
+============================================================ */
 
 function voiceInput() {
 
@@ -1888,7 +2066,6 @@ function voiceInput() {
         return;
     }
 
-
     if (recognition) {
 
         try {
@@ -1899,7 +2076,6 @@ function voiceInput() {
 
         return;
     }
-
 
     recognition =
         new SpeechRecognition();
@@ -1916,7 +2092,6 @@ function voiceInput() {
     recognition.maxAlternatives =
         1;
 
-
     recognition.onstart =
         () => {
 
@@ -1928,7 +2103,6 @@ function voiceInput() {
                     "🔴";
             }
         };
-
 
     recognition.onresult =
         event => {
@@ -1960,7 +2134,6 @@ function voiceInput() {
             input.focus();
         };
 
-
     recognition.onerror =
         error => {
 
@@ -1969,7 +2142,6 @@ function voiceInput() {
                 error
             );
         };
-
 
     recognition.onend =
         () => {
@@ -1984,7 +2156,6 @@ function voiceInput() {
 
             recognition = null;
         };
-
 
     try {
 
@@ -2001,10 +2172,9 @@ function voiceInput() {
     }
 }
 
-
 /* ============================================================
-   MODALS
-   ============================================================ */
+MODALS
+============================================================ */
 
 function setupModalBackgrounds() {
 
@@ -2038,10 +2208,9 @@ function setupModalBackgrounds() {
         );
 }
 
-
 /* ============================================================
-   EVENTS
-   ============================================================ */
+EVENTS
+============================================================ */
 
 function setupEvents() {
 
@@ -2055,13 +2224,11 @@ function setupEvents() {
             login
         );
 
-
     $("signupBtn")
         ?.addEventListener(
             "click",
             signup
         );
-
 
     $("showSignup")
         ?.addEventListener(
@@ -2072,7 +2239,6 @@ function setupEvents() {
                 )
         );
 
-
     $("showLogin")
         ?.addEventListener(
             "click",
@@ -2082,6 +2248,74 @@ function setupEvents() {
                 )
         );
 
+    /* =========================
+       FORGOT PASSWORD
+    ========================= */
+
+    $("showForgotPassword")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                showAuthScreen(
+                    "forgotPasswordScreen"
+                );
+
+                const email =
+                    $("loginEmail")?.value.trim();
+
+                if (
+                    email &&
+                    $("forgotPasswordEmail")
+                ) {
+
+                    $("forgotPasswordEmail").value =
+                        email;
+                }
+            }
+        );
+
+    $("forgotPasswordBtn")
+        ?.addEventListener(
+            "click",
+            forgotPassword
+        );
+
+    $("backToLogin")
+        ?.addEventListener(
+            "click",
+            () =>
+                showAuthScreen(
+                    "loginScreen"
+                )
+        );
+
+    /* =========================
+       RESET PASSWORD
+    ========================= */
+
+    $("resetPasswordBtn")
+        ?.addEventListener(
+            "click",
+            resetPassword
+        );
+
+    $("backToLoginFromReset")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                window.history.replaceState(
+                    {},
+                    document.title,
+                    window.location.pathname
+                );
+
+                showAuthScreen(
+                    "loginScreen"
+                );
+            }
+        );
 
     /* =========================
        DRAWER
@@ -2093,13 +2327,11 @@ function setupEvents() {
             openDrawer
         );
 
-
     $("closeDrawer")
         ?.addEventListener(
             "click",
             closeDrawer
         );
-
 
     $("drawerOverlay")
         ?.addEventListener(
@@ -2107,14 +2339,12 @@ function setupEvents() {
             closeDrawer
         );
 
-
     $("newChatBtn")
         ?.addEventListener(
             "click",
             () =>
                 createNewChat(false)
         );
-
 
     /* =========================
        CHAT
@@ -2127,13 +2357,11 @@ function setupEvents() {
                 sendMessage()
         );
 
-
     $("voiceBtn")
         ?.addEventListener(
             "click",
             voiceInput
         );
-
 
     $("messageInput")
         ?.addEventListener(
@@ -2152,7 +2380,6 @@ function setupEvents() {
             }
         );
 
-
     $("messageInput")
         ?.addEventListener(
             "input",
@@ -2168,7 +2395,6 @@ function setupEvents() {
                     ) + "px";
             }
         );
-
 
     /* =========================
        SUGGESTIONS
@@ -2193,7 +2419,6 @@ function setupEvents() {
             }
         );
 
-
     /* =========================
        PROFILE
     ========================= */
@@ -2209,20 +2434,17 @@ function setupEvents() {
             }
         );
 
-
     $("topProfileBtn")
         ?.addEventListener(
             "click",
             openProfile
         );
 
-
     $("saveProfileBtn")
         ?.addEventListener(
             "click",
             saveProfile
         );
-
 
     $("closeProfileModal")
         ?.addEventListener(
@@ -2232,7 +2454,6 @@ function setupEvents() {
                     $("profileModal")
                 )
         );
-
 
     /* =========================
        MEMORY
@@ -2249,13 +2470,11 @@ function setupEvents() {
             }
         );
 
-
     $("clearMemoryBtn")
         ?.addEventListener(
             "click",
             clearMemory
         );
-
 
     $("closeMemoryModal")
         ?.addEventListener(
@@ -2266,7 +2485,6 @@ function setupEvents() {
                 )
         );
 
-
     /* =========================
        RENAME
     ========================= */
@@ -2276,7 +2494,6 @@ function setupEvents() {
             "click",
             saveConversationName
         );
-
 
     $("closeRenameModal")
         ?.addEventListener(
@@ -2291,7 +2508,6 @@ function setupEvents() {
                 );
             }
         );
-
 
     /* =========================
        ACCOUNT
@@ -2308,20 +2524,17 @@ function setupEvents() {
             }
         );
 
-
     $("accountLoginBtn")
         ?.addEventListener(
             "click",
             switchAccount
         );
 
-
     $("accountSignupBtn")
         ?.addEventListener(
             "click",
             switchToSignup
         );
-
 
     $("closeAccountModal")
         ?.addEventListener(
@@ -2332,7 +2545,6 @@ function setupEvents() {
                 )
         );
 
-
     /* =========================
        LOGOUT
     ========================= */
@@ -2342,7 +2554,6 @@ function setupEvents() {
             "click",
             logout
         );
-
 
     /* =========================
        ESCAPE KEY
@@ -2361,21 +2572,20 @@ function setupEvents() {
             document
                 .querySelectorAll(".modal")
                 .forEach(
-                    modal => hide(modal)
+                    modal =>
+                        hide(modal)
                 );
 
             renameConversationId = null;
         }
     );
 
-
     setupModalBackgrounds();
 }
 
-
 /* ============================================================
-   AUTH ENTER KEYS
-   ============================================================ */
+AUTH ENTER KEYS
+============================================================ */
 
 function setupAuthEnterKeys() {
 
@@ -2393,7 +2603,6 @@ function setupAuthEnterKeys() {
             }
         );
 
-
     $("signupPassword")
         ?.addEventListener(
             "keydown",
@@ -2408,6 +2617,47 @@ function setupAuthEnterKeys() {
             }
         );
 
+    $("forgotPasswordEmail")
+        ?.addEventListener(
+            "keydown",
+            event => {
+
+                if (event.key === "Enter") {
+
+                    event.preventDefault();
+
+                    forgotPassword();
+                }
+            }
+        );
+
+    $("resetPassword")
+        ?.addEventListener(
+            "keydown",
+            event => {
+
+                if (event.key === "Enter") {
+
+                    event.preventDefault();
+
+                    resetPassword();
+                }
+            }
+        );
+
+    $("resetPasswordConfirm")
+        ?.addEventListener(
+            "keydown",
+            event => {
+
+                if (event.key === "Enter") {
+
+                    event.preventDefault();
+
+                    resetPassword();
+                }
+            }
+        );
 
     $("renameConversationInput")
         ?.addEventListener(
@@ -2424,10 +2674,9 @@ function setupAuthEnterKeys() {
         );
 }
 
-
 /* ============================================================
-   START NEXORA
-   ============================================================ */
+START NEXORA
+============================================================ */
 
 async function startNexora() {
 
@@ -2435,10 +2684,18 @@ async function startNexora() {
 
     setupAuthEnterKeys();
 
+    /*
+     * IMPORTANT:
+     * If the user opened a password-reset link,
+     * don't automatically log them into the app.
+     */
+
+    if (checkPasswordResetLink()) {
+        return;
+    }
 
     const savedUser =
         loadUser();
-
 
     if (savedUser) {
 
@@ -2452,11 +2709,10 @@ async function startNexora() {
         return;
     }
 
-
     /*
-       Show splash first,
-       then reveal login.
-    */
+     * Show splash first,
+     * then reveal login.
+     */
 
     setTimeout(
         () => {
@@ -2474,10 +2730,9 @@ async function startNexora() {
     );
 }
 
-
 /* ============================================================
-   START
-   ============================================================ */
+START
+============================================================ */
 
 document.addEventListener(
     "DOMContentLoaded",
